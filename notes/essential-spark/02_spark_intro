@@ -233,7 +233,7 @@ CHAPTER 2 - SPARK INTRO
         # Read the csv file
         flightData2015 = spark.read\
                               .option("inferSchema", "true")\
-                              .opttion("header", "true")\
+                              .option("header", "true")\
                               .csv("data/flight-data/csv/2015-summary.csv")
 
 

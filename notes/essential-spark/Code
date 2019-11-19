@@ -13,6 +13,8 @@
     # Start pyspark shell
     $ pyspark
 
+    We can monitor running jobs at 'http://localhost:4040'
+
     # Shut down processes when done
     stop-slave.sh
     stop-master.sh
