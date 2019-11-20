@@ -1,0 +1,74 @@
+-------------------------------------------------------------------------------
+CHAPTER 9 - DATA SOURCES
+-------------------------------------------------------------------------------
+
+- Supported Data Types
+
+    - Spark's Core Data Souces:
+
+        1. CSV
+        2. JSON
+        3. Parquet
+        4. ORC
+        5. ODBC/JDBC connections
+        6. Plain-text files
+
+
+    - Community-Created Data Sources:
+
+        1. Cassandra
+        2. HBase
+        3. MongoDB
+        4. AWS Redshift
+        5. XML
+        6. Many, many others...
+
+
+
+- The Read API Structure
+
+- Read Modes
+
+- The Write API Structure
+
+- Save Modes
+
+- CSV File Options
+
+- Reading CSV Files
+
+- Writing CSV Files
+
+- JSON File Options
+
+- Reading JSON Files
+
+- Writing JSON Files
+
+- Parquet File Options
+
+- Reading Parquet Files
+
+- Writing Parquet Files
+
+- Reading ORC Files
+
+- Writing ORC Files
+
+- JDBC Options
+
+- Reading from SQL Databases
+
+- Query Pushdown
+
+- Reading from Databases in Parallel
+
+- Partitioning Based on a Sliding Window
+
+- Writing to SQL Databases
+
+- Reading Text Files
+
+- Writing Text Files
+
+- Advanced I/O Concepts

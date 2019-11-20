@@ -1,0 +1,41 @@
+-------------------------------------------------------------------------------
+CHAPTER 10 - SPARK SQL
+-------------------------------------------------------------------------------
+
+- SQL, Hive, and Spark SQL
+
+- Spark's Relationship to Hive
+
+- Running Spark SQL Queries
+
+- SparkSQL Thrift JDBC/ODBC Server
+
+- The Catalog
+
+- Spark-Managed Tables
+
+- Creating Tables
+
+- Creating External Tables
+
+- Inserting Into Tables
+
+- Table Metadata
+
+- Dropping Tables
+
+- Caching Tables
+
+- Creating Views
+
+- Dropping Views
+
+- Databases
+
+- Select Statements
+
+- Advanced Topics
+
+- Subqueries
+
+- Spark SQL Configuration

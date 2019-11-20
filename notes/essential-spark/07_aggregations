@@ -1,0 +1,39 @@
+-------------------------------------------------------------------------------
+CHAPTER 7 - AGGREGATIONS
+-------------------------------------------------------------------------------
+
+- Grouping and Aggregating
+
+- Counting
+
+- First and Last
+
+- Min and Max
+
+- Sum
+
+- Average
+
+- Variance and Standard Deviation
+
+- Skewness and Kurtosis
+
+- Covariance and Correlation
+
+- Aggregating to Complex Types
+
+- Grouping
+
+- Window Functions
+
+- Grouping Sets
+
+- Rollups
+
+- Cubes
+
+- Grouping Metadata
+
+- Pivoting
+
+- User-Defined Aggregate Functions

@@ -420,3 +420,7 @@ CHAPTER 5 - BASIC STRUCTURED OPERATIONS
     
     # Coalesce (will try to avoid a full shuffle)
     > df.repartition(5, col("DEST_COUNTRY_NAME")).coalesce(2)
+
+
+
+- Collecting Rows to the Driver

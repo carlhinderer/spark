@@ -1,0 +1,27 @@
+-------------------------------------------------------------------------------
+CHAPTER 8 - JOINS
+-------------------------------------------------------------------------------
+
+- Join Expressions and Types
+
+- Inner Joins
+
+- Outer Joins
+
+- Left Outer Joins
+
+- Right Outer Joins
+
+- Left Semi Joins
+
+- Left Anti Joins
+
+- Natural Joins
+
+- Cross (Cartesian) Joins
+
+- Joining on Complex Types
+
+- Handling Duplicate Column Names
+
+- How Spark Performs Joins
