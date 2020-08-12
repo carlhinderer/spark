@@ -1,0 +1,38 @@
+-----------------------------------------------------------------------
+|  CHAPTER 1 - INTRODUCTION                                           |
+-----------------------------------------------------------------------
+
+- Why Large Datasets?
+
+
+
+- Parallel Computing
+
+    - Understanding parallel computing
+
+    - Scalable computing with the map and reduce style
+
+    - When to use this style
+
+
+
+- The Map and Reduce Style
+
+    - The map function for transforming data
+
+    - The reduce function for advanced transformations
+
+    - Map and reduce for data transformation pipelines
+
+
+
+- Distributed computing for speed and scale
+
+
+- Hadoop
+
+
+- Spark
+
+
+- AWS EMR

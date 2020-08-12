@@ -1,0 +1,33 @@
+------------------------------------------------------------------------------
+|  CHAPTER 2 - ACCELERATING LARGE DATASET WORK - MAP AND PARALLEL COMPUTING  |
+------------------------------------------------------------------------------
+
+- Introduction to Map
+
+    - Simple Example
+
+    - Retrieving URLs with map
+
+    - The power of lazy functions (like map) for large datasets
+
+
+
+- Parallel Processing
+
+    - Processors and processing
+
+    - Parallelization and pickling
+
+    - Order and parallelization
+
+    - State and parallelization
+
+
+
+- Scraping a Wikipedia Network
+
+    - Breaking down the problem
+
+    - Visualizing our graph
+
+    - Returning to map

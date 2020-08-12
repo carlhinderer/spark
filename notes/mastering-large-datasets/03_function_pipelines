@@ -1,0 +1,23 @@
+------------------------------------------------------------------------------
+|  CHAPTER 3 - FUNCTION PIPELINES FOR MAPPING COMPLEX TRANSFORMATIONS        |
+------------------------------------------------------------------------------
+
+- Helper Functions and Function Chains
+
+
+
+- Unmasking Hacker Communications
+
+    - Creating helper functions
+
+    - Creating a pipeline
+
+
+
+- Twitter Demographic Projections
+
+    - Tweet-level pipeline
+
+    - User-level pipeline
+
+    - Applying the pipeline
