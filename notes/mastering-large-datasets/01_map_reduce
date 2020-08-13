@@ -4,6 +4,17 @@
 
 - Why Large Datasets?
 
+    3 Sizes of Large Dataset Problems
+
+      1. Data can both fit and be processed on a PC
+           (We know how to solve these)
+  
+      2. The solution can be executed from a PC, but the data can't be stored on a PC
+           (Needs parallel computing)
+  
+      3. The solution can't be executed or stored on a PC
+           (Needs distributed computing)
+
 
 
 - Parallel Computing
