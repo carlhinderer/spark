@@ -1,0 +1,25 @@
+-------------------------------------------------------------------------
+|  CHAPTER 10 - FASTER DECISION-MAKING WITH MACHINE LEARNING & PYSPARK  |
+-------------------------------------------------------------------------
+
+- What is Machine Learning?
+
+    - Machine learning as self-adjusting judgmental algorithms
+
+    - Common applications of machine learning
+
+
+
+- Machine Learning Basics with Decision Tree Classifiers
+
+    - Designing decision tree classifiers
+
+    - Implementing a decision tree in PySpark
+
+
+
+- Fast Random Forest Classifications in PySpark
+
+    - Understanding random forest classifiers
+
+    - Implementing a random forest classifier

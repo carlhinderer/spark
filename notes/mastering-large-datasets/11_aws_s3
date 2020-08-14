@@ -1,0 +1,23 @@
+----------------------------------------------------------------------
+|  CHAPTER 11 - LARGE DATASETS IN THE CLOUD WITH AWS & S3            |
+----------------------------------------------------------------------
+
+- AWS S3 - A Solution for Large Datasets
+
+    - Limitless storage with S3
+
+    - Cloud-based storage for scalability
+
+    - Objects for convenient heterogenous storage
+
+    - Managed service for conveniently managing large datasets
+
+    - Life cycle policies for managing large datasets over time
+
+
+
+- Storing Data in the Cloud
+
+    - Storign data in S3 through the browser
+
+    - Programmatic access to S3 with Python and boto

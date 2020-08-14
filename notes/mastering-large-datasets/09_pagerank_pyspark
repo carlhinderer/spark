@@ -1,0 +1,21 @@
+---------------------------------------------------------------------
+|  CHAPTER 9 - PAGERANK WITH MAP & REDUCE IN PYSPARK                |
+---------------------------------------------------------------------
+
+- A Closer Look at Pyspark
+
+    - Map-like methods in PySpark
+
+    - Reduce-like methods in PySpark
+
+    - Convenience methods in PySpark
+
+
+
+- Tennis Rankings with Elo and PageRank in PySpark
+
+    - Revisiting Elo ratings with PySpark
+
+    - Introducing the PageRank algorithm
+
+    - Ranking tennis players with PageRank
