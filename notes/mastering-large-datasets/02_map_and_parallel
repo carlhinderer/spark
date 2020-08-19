@@ -25,11 +25,57 @@
 
     - Processors and processing
 
+        # Get number of CPUs on machine
+        >>> import os
+        >>> os.cpu_count()
+
+
+    - Problems that may be encountered when working with parallelization in Python:
+
+        - The inability to pickle data or functions, causing our programs to not run
+        - Order-sensitive operations returning inconsistent results
+        - State-dependent operations returning inconsistent results
+
+
     - Parallelization and pickling
+
+        - When we write something like our parallel map, Python is doing a lot of work
+            behind the scenes.  One of those things is pickling.
+
+        - Pickling is Python's version of object serialization (aka marshalling), which is
+            the storing of objects from our code on disk in an efficient binary format that
+            can be read back at a later time.
+
+        - It is a gotcha that some Python objects cannot be pickled, and this will cause an
+            error.  All standard Python objects are pickleable, but lambda functions and 
+            nested functions and classes are not.
+
+
+        - If we have to try and use unpicklable objects, we can use the open source 'pathos'
+            library which provides the 'dill' module, which allows us to pickle almost
+            anything.
+
+            # Install pathos
+            $ pip install pathos
+
+            # Use pathos as process pool
+            from pathos.multiprocessing import ProcessPool
+            ...
+            with ProcessPool(nodes=4) as P:
+                blog_posts = P.map(get_url,days_between((2000,1,1),(2011,1,1)))
+
 
     - Order and parallelization
 
-    - State and parallelization
+        - Even though Python will execute out of order, it will still remember the order
+            after execution is complete.  For instance, this will print the numbers out of
+            order but will return a data structure that is in order:
+
+            def print_and_return(x):
+                print(x); return x
+
+            with Pool() as P:
+                P.map(print_and_return, range(20))
 
 
 
