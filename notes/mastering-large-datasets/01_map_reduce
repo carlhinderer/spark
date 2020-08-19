@@ -17,33 +17,29 @@
 
 
 
-- Parallel Computing
-
-    - Understanding parallel computing
-
-    - Scalable computing with the map and reduce style
-
-    - When to use this style
-
-
-
 - The Map and Reduce Style
 
     - The map function for transforming data
 
+        The map function always returns an output of equal size to the input.
+          (ie map a sequence of web pages into the URLs those pages contain)
+
+
     - The reduce function for advanced transformations
+
+        The reduce function allows us to take a sequence of data and transform it into a 
+          data structure of any shape of size.
+          (for instance, return the counts of the URLs found)
+
 
     - Map and reduce for data transformation pipelines
 
+        Often we want to use map and reduce together, giving rise to the 'MapReduce' pattern.
 
+          example: find the sum of the greatest prime factors of a sequence of numbers
+                     by transforming each number into its greatest prime factor, then
+                     using reduce to take their sum
 
-- Distributed computing for speed and scale
-
-
-- Hadoop
-
-
-- Spark
-
-
-- AWS EMR
+          example: find the longest word on a sequnce of web pages, when all we have is URLs
+                     by using map to turn the URLs into text, and reduce to find the longest
+                     word
