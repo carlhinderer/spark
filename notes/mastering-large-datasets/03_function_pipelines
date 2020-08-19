@@ -2,15 +2,54 @@
 |  CHAPTER 3 - FUNCTION PIPELINES FOR MAPPING COMPLEX TRANSFORMATIONS        |
 ------------------------------------------------------------------------------
 
-- Helper Functions and Function Chains
-
-
-
 - Unmasking Hacker Communications
+
+    - Given any hacker string, we’ll want to do the following:
+
+        - Replace all the 7s with t’s.
+        - Replace all the 3s with e’s.
+        - Replace all the 4s with a’s.
+        - Replace all the 6s with g’s.
+        - Replace all the Chinese characters with spaces.
+
 
     - Creating helper functions
 
+        # Helper Functions
+
+        def replace_7t(s):
+            return s.replace('7','t')
+        def replace_3e(s):
+            return s.replace('3','e')
+        def replace_6g(s):
+            return s.replace('6','g')
+        def replace_4a(s):
+            return s.replace('4'.,'a')
+
+
+        # Chinese character matcher, in class to store compiled regex
+
+        import re
+
+        class ChineseMatcher:
+        
+            def __init__(self):
+                self.r = re.compile(r'[\u4e00-\u9fff]+')
+        
+            def sub_chinese(self,s):
+                return self.r.sub(s, " ") 
+
+
     - Creating a pipeline
+
+        - 3 Ways to chain helper functions together:
+
+            1. Use a sequence of maps
+            2. Chain functions together using compose
+            3. Create a function pipeline with 'pipe'
+
+
+        - 
 
 
 
