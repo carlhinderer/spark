@@ -81,8 +81,28 @@
 
 - Scraping a Wikipedia Network
 
+    - Problem
+
+        - We want to create a topic network graph from Wikipedia.  We want to be able to
+            enter a search term and find all the pages in that page's immediate network - 
+            pages that link to that page or that page links to.
+
+        - The result will be a graph of all the pages in our network.
+
+
     - Breaking down the problem
 
-    - Visualizing our graph
+        To-do list:
 
-    - Returning to map
+          - Write a function that gets the inbound and outbound links of a Wikipedia page.
+          - Get the inbound and outbound links from our initial page.
+          - Gather those pages in one long list.
+          - Get the inbound and outbound links from all of those pages.
+          - We’ll do this in parallel, to speed things up.
+          - Represent all our links as edges between pages.
+          - Bonus: Use a graphing library (like networkx) to display the graph.
+
+
+    - Generating a graph with networkx
+
+        $ pip install networkx
