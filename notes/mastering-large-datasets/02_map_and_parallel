@@ -4,11 +4,20 @@
 
 - Introduction to Map
 
-    - Simple Example
+    - 3 primary capabilities of map
 
-    - Retrieving URLs with map
+        - We can use it to replace for loops.
+        - We can use it to transform data.
+        - Map evaluates only when necessary, not when called.
+
 
     - The power of lazy functions (like map) for large datasets
+
+        When moving from Python2 to Python3, the 'range' function was made lazy.  This was
+          so that huge ranges could be created without:
+
+          1. Taking the time to generate a massive list of numbers
+          2. Storing all the values in memory when we may only need a few
 
 
 
