@@ -1,19 +1,4 @@
-
-# Simplest map example
-
 import re
-
-class PhoneFormatter:
-  def __init__(self):
-    self.r = re.compile(r"\d")
-
-  def pretty_format(self, phone_number):
-    phone_numbers = self.r.findall(phone_number)
-    area_code = "".join(phone_numbers[-10:-7])
-    first_3 = "".join(phone_numbers[-7:-4])
-    last_4 = "".join(phone_numbers[-4:len(phone_numbers)])
-    return "({}) {}-{}".format(area_code, first_3, last_4)
-
 
 phone_numbers = [
   "(123) 456-7890",
@@ -21,6 +6,36 @@ phone_numbers = [
   "123.456.7890",
   "+1 123 456-7890"
 ]
+
+
+
+# Just use a for loop
+def transform_with_for_loop():
+    new_numbers = []
+    R = re.compile(r"\d")
+
+    for number in phone_numbers:
+        digits = R.findall(number)
+        area_code = "".join(digits[-10:-7])
+        first_3 = "".join(digits[-7:-4])
+        last_4 = "".join(digits[-4:len(digits)])
+        pretty_format = "({}) {}-{}".format(area_code,first_3,last_4)
+        new_numbers.append(correct_format)
+
+
+
+# Simplest map example
+class PhoneFormatter:
+    def __init__(self):
+        self.r = re.compile(r"\d")
+
+    def pretty_format(self, phone_number):
+        phone_numbers = self.r.findall(phone_number)
+        area_code = "".join(phone_numbers[-10:-7])
+        first_3 = "".join(phone_numbers[-7:-4])
+        last_4 = "".join(phone_numbers[-4:len(phone_numbers)])
+        return "({}) {}-{}".format(area_code, first_3, last_4)
+
 
 P = PhoneFormatter()
 print(list(map(P.pretty_format, phone_numbers)))
@@ -43,7 +58,7 @@ def days_between(start, stop):
 
 # Get the html for a url
 def get_url(path):
-  return request.urlopen(path).read()
+    return request.urlopen(path).read()
 
 # Get all the blog posts in a range
 blog_posts = map(get_url,days_between((2000,1,1),(2011,1,1)))

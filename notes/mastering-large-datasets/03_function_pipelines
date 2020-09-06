@@ -49,11 +49,24 @@
             3. Create a function pipeline with 'pipe'
 
 
-        - 
+        - The compose and pipe functions are provided in the toolz library.
+
+            $ pip install toolz
 
 
 
 - Twitter Demographic Projections
+
+    - Here, we get a list of tweet idents for each user, and we want to try and predict the
+        gender of the Twitter user.  We will need to:
+
+        - Retrieve the tweets represented by those IDs
+        - Extract the tweet text from those tweets
+        - Tokenize the extracted text
+        - Score the tokens
+        - Score users based on their tweet scores
+        - Categorize the users based on their score
+
 
     - Tweet-level pipeline
 
