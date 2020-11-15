@@ -34,10 +34,10 @@ class ChineseMatcher:
 C = chinese_matcher()
 
 map(C.sub_chinese,
-        map(replace_4a,
-            map(replace_6g,
-                map(replace_3e,
-                    map(replace_7t, sample_messages)))))
+    map(replace_4a,
+        map(replace_6g,
+            map(replace_3e,
+                map(replace_7t, sample_messages)))))
 
 
 

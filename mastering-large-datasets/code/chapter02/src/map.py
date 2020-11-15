@@ -61,4 +61,4 @@ def get_url(path):
     return request.urlopen(path).read()
 
 # Get all the blog posts in a range
-blog_posts = map(get_url,days_between((2000,1,1),(2011,1,1)))
+blog_posts = map(get_url, days_between((2000,1,1),(2011,1,1)))
