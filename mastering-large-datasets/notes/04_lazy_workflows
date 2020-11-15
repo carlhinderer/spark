@@ -1,0 +1,43 @@
+---------------------------------------------------------------------
+|  CHAPTER 4 - PROCESSING LARGE DATASETS WITH LAZY WORKFLOWS        |
+---------------------------------------------------------------------
+
+- What is Laziness?
+
+
+
+- Some Lazy Functions to Know
+
+    - Shrinking sequences with the filter function
+
+    - Combining sequences with zip
+
+    - Lazy file searching with iglob
+
+
+
+- Understanding Iterators - The Magic Behind Lazy Python
+
+    - Python iterators
+
+    - Generators
+
+
+
+- The Poetry Puzzle - Lazily Processing a Large Dataset
+
+    - Generating data for this example
+
+    - Reading poems in with iglob
+
+    - A poem-cleaning regular expression class
+
+    - Calculating the ratio of articles
+
+
+
+- Lazy Simulations - Simulating Fishing Villages
+
+    - Creating a village class
+
+    - Designing the simulation class for our fishing simulation

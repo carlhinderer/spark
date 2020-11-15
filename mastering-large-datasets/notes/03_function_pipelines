@@ -1,0 +1,110 @@
+------------------------------------------------------------------------------
+|  CHAPTER 3 - FUNCTION PIPELINES FOR MAPPING COMPLEX TRANSFORMATIONS        |
+------------------------------------------------------------------------------
+
+- Unmasking Hacker Communications
+
+    - Given any hacker string, we’ll want to do the following:
+
+        - Replace all the 7s with t’s.
+        - Replace all the 3s with e’s.
+        - Replace all the 4s with a’s.
+        - Replace all the 6s with g’s.
+        - Replace all the Chinese characters with spaces.
+
+
+    - Creating helper functions
+
+        # Helper Functions
+
+        def replace_7t(s):
+            return s.replace('7','t')
+        def replace_3e(s):
+            return s.replace('3','e')
+        def replace_6g(s):
+            return s.replace('6','g')
+        def replace_4a(s):
+            return s.replace('4'.,'a')
+
+
+        # Chinese character matcher, in class to store compiled regex
+
+        import re
+
+        class ChineseMatcher:
+        
+            def __init__(self):
+                self.r = re.compile(r'[\u4e00-\u9fff]+')
+        
+            def sub_chinese(self,s):
+                return self.r.sub(s, " ") 
+
+
+    - Creating a pipeline
+
+        - 3 Ways to chain helper functions together:
+
+            1. Use a sequence of maps
+            2. Chain functions together using compose
+            3. Create a function pipeline with 'pipe'
+
+
+        - The compose and pipe functions are provided in the toolz library.
+
+            $ pip install toolz
+
+
+
+- Twitter Demographic Projections
+
+    - Here, we get a list of tweet idents for each user, and we want to try and predict the
+        gender of the Twitter user.  We will need to:
+
+        - Retrieve the tweets represented by those IDs
+        - Extract the tweet text from those tweets
+        - Tokenize the extracted text
+        - Score the tokens
+        - Score users based on their tweet scores
+        - Categorize the users based on their score
+
+
+    - In order to interact with Twitter, we'll need to:
+
+        1. Install the python-twitter package.
+
+             $ pip install python-twitter
+
+        2. Sign up for a Twitter developer account.
+
+        3. Create a new 'app' in the Twitter developer console.
+
+
+    - Tweet-level pipeline
+
+    - User-level pipeline
+
+    - Applying the pipeline
+
+
+
+
+SOFT SKILLS
+----------------------------------------------------
+
+- I am a business person running my own business.
+
+- I only need one client.
+
+- You can't achieve any goals if you don't know what the goals are.
+    - Management?
+    - Own a company?
+    - 5 years?
+    - 10 years?
+    - Track your goals
+
+- Options
+    - Employee
+    - Independent consultant
+    - Entrepeneur
+
+- 

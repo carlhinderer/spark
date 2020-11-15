@@ -1,0 +1,45 @@
+------------------------------------------------------------------------
+|  CHAPTER 7 - PROCESSING TRULY BIG DATASETS WITH HADOOP & SPARK       |
+------------------------------------------------------------------------
+
+- Distributed Computing
+
+
+
+- Hadoop for Batch Processing
+
+    - The 5 Hadoop Modules
+
+        1. MapReduce
+        2. YARN
+        3. HDFS
+        4. Ozone
+        5. Common
+
+
+
+- Using Hadoop to Find High-Scoring Words
+
+    - MapReduce Jobs using Python and Hadoop Streaming
+
+    - Scoring words using Hadoop Steaming
+
+
+
+- Spark for Interactive Workflows
+
+    - Big datasets in memory with Spark
+
+    - PySpark for mixing Python and Spark
+
+    - Enterprise data analytics using Spark SQL
+
+    - Columns of data with Spark DataFrame
+
+
+
+- Document Word Scores in Spark
+
+    - Setting Up Spark
+
+    - MapReduce Spark jobs with spark-submit
