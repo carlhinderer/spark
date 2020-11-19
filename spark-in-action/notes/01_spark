@@ -118,3 +118,13 @@
        ROW[Col1, Col2, ..., ColN]
        -------------------------------------------
        Partition1   Partition2  ...  PartitionN
+
+
+
+- Running First Spark App
+
+    # Run application
+    $ spark-submit CsvToDataFrame.py
+
+    # Run pyspark console instead
+    $ pyspark
