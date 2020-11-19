@@ -6,7 +6,7 @@ data_path = 'ch01/data/books.csv'
 csv_data_path = os.path.join(parent_dir, data_path)
 
 # Create a session on the local master
-session = SparkSession.builder.appName("Csv To DataFrame").master("local[*]").getOrCreate()
+session = SparkSession.builder.appName("Csv To DataFrame").master("local").getOrCreate()
 
 # Read the CSV file with header and store it in a DataFrame
 df = session.read.csv(header=True, inferSchema=True, path=csv_data_path)
