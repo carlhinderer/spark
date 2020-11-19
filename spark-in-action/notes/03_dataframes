@@ -1,0 +1,126 @@
+-----------------------------------------------------------------------
+|  CHAPTER 3 - DATAFRAMES                                             |
+-----------------------------------------------------------------------
+
+- The Essential Role of the DataFrame
+
+    - DataFrames are both a data structure and an API.  It is used in a unified way
+        by Spark SQL, Spark Streaming, MLLib, and GraphX.  The DataFrame API is
+        available in Java, Python, Scala, and R.
+
+    - DataFrames are a set of records organized into named columns, similarly to a
+        relational database.
+
+    - Can be constructed from a wide range of sources, such as files, databases, or
+        custom sources.
+
+    - Can be stored in memory or on disk, but will use as much memory as it can.
+
+
+
+- Immutability
+
+    - DataFrames, as well as datasets and RDDs, are immutable.
+
+    - In the first state, data is immuatable.  Then you start modifying it, but Spark
+        only stores your modifications, not every step of the transformed data.
+
+    - Immutability becomes really important when you think about it in a distributed
+        way.  In terms of storage, you have 2 choices:
+
+        1. You store data, and each modification is done immediately on every node, as
+             in a relational DB.
+
+        2. You keep the data in sync over the nodes and share only the transformation
+             recipe with the various nodes.  This is what Spark does.
+
+
+
+- DataFrame Example
+
+    - In this example, we use 2 lists of restaurants, one from Wake County and one from 
+        Durham County.  We need to transform them to have the same schema, then union
+        them together.
+
+        Data Files -> INGESTION -> TRANSFORMATION -> UNION -> DISPLAY
+
+
+    - Once we have loaded the csv into the DataFrame, we can inspect the schema.
+
+        df.printSchema()
+
+        root 
+          |-- OBJECTID: string (nullable = true) 
+          |-- HSISID: string (nullable = true) 
+          |-- NAME: string (nullable = true) 
+          |-- ADDRESS1: string (nullable = true) 
+          |-- ADDRESS2: string (nullable = true) 
+          |-- CITY: string (nullable = true) 
+          |-- STATE: string (nullable = true) 
+          |-- POSTALCODE: string (nullable = true) 
+          |-- PHONENUMBER: string (nullable = true) 
+          |-- RESTAURANTOPENDATE: string (nullable = true) 
+          |-- FACILITYTYPE: string (nullable = true) 
+          |-- PERMITID: string (nullable = true) 
+          |-- X: string (nullable = true) 
+          |-- Y: string (nullable = true) 
+          |-- GEOCODESTATUS: string (nullable = true)
+
+
+    - We want to transform our schema so that it looks like:
+
+        root 
+          |-- datasetId: string (nullable = true)
+          |-- name: string (nullable = true)
+          |-- address1: string (nullable = true)
+          |-- address2: string (nullable = true)
+          |-- city: string (nullable = true)
+          |-- state: string (nullable = true)
+          |-- zip: string (nullable = true)
+          |-- tel: string (nullable = true)
+          |-- dateStart: string (nullable = true)
+          |-- type: string (nullable = true)
+          |-- geoX: string (nullable = true)
+          |-- geoY: string (nullable = true)
+          |-- county: string (nullable = false)
+          |-- id: string (nullable = true)
+
+
+    - We use these DataFrame methods in this example:
+
+        withColumn()             # Creates new column from expression or column
+        withColumnRenamed()      # Renames a column
+
+        col()                    # Gets a column from its name
+        drop()                   # Drops a column from a DataFrame
+
+        lit()                    # Creates a literal value
+        concat()                 # Concatenates the values in a set of columns
+
+
+
+- Data is Stored in Partitions
+
+
+- Digging in the Schema
+
+
+- A DataFrame After a JSON Ingestion
+
+
+- Combining Two DataFrames
+
+
+- The DataFrame is a Dataset<Row>
+
+
+- Reusing POJOs
+
+
+- Creating a Dataset of Strings
+
+
+- Converting Back and Forth
+
+
+- DataFrame's Ancestor - The RDD
