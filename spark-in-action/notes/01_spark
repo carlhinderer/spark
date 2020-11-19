@@ -1,3 +1,120 @@
 -----------------------------------------------------------------------
 |  CHAPTER 1 - SPARK                                                  |
 -----------------------------------------------------------------------
+
+- Spark can be considered an Analytics Operating System.
+
+            App
+     --------------------------------------------
+     Analytics and Data Processing    \   Apache
+     Distributed Computing            /   Spark
+     --------------------------------------------
+     OS            OS            OS
+     Hardware      Hardware      Hardware
+
+
+
+- 4 Pillars of Spark Unified API
+
+    1. Spark SQL
+    2. Spark Streaming
+    3. Spark MLLib
+    4. GraphX
+
+
+
+- Data engineers are data preparers and data logistics experts.  They make sure that:
+
+    - Data is available
+    - Data quality rules are applied successfully
+    - Transformations are applied successfully
+    - Data is available to other systems, including data analysts and data scientists
+    - They may also be taking the work of data scientists and industrializing it
+
+
+
+- 4 Steps of a Typical Spark Application
+
+    1. Ingestion
+    2. Improvement of Data Quality
+    3. Transformation
+    4. Publication
+
+
+    Data -> INGESTION -> Raw -> APPLY DQ -> Pure -> TRANSFORM -> Rich -> PUBLICATION -> Actionable
+                         Data   RULES       Data                 Data                   Data
+
+
+    - Ingestion
+        - Can take data from a variety of sources
+        - If you can't find a supported format, you can build your own data source
+        - aka Raw data, Staging, Landing, Bronze, Swamp zone
+
+    - Improving DQ
+        - ie ensure all birth dates are in the past
+        - Can also obfuscate data like SSNs here
+        - aka Refinery, Silver, Pond, Sandbox, Exploration zone
+
+    - Transforming
+        - Join with other data sets
+        - Apply custom functions and aggregations
+        - Implement ML
+        - aka Rich Data, Production, Gold, Refined, Lagoon, Operationalization zone
+
+    - Loading and Publishing
+        - ETL process
+        - Load data into data warehouse, BI tool, call APIs, save in file
+        - Result is actionable data
+
+
+
+- Spark is also commonly used interactively in Juypter Notebooks by data scientists.
+
+
+
+- 5 Vs of Big Data
+
+    1. Volume = quantity of generated and stored data
+    2. Variety = type and nature of the data
+    3. Velocity = speed at which data is generated and processed
+    4. Variability = inconsistency of the dataset
+    5. Veracity = data quality can vary greatly
+
+
+
+- Spark Real-World Examples
+
+    - Spark ingests North Carolina restaurant data, including health reports and violations,
+        to predict whether restaurants are improving or declining in quality.
+
+    - Lumeris ingests health data from a variety of different sources on patients in order
+        to predict when health problems will occur and save lives.
+
+    - Spark analyzes equipment logs from CERN to determine whether each piece of equipment
+        is working correctly.
+
+    - Spark is used by DataBricks notebooks to build interactive data-wrangling tools.
+
+    - Spark is used to monitor the quality of video feeds for TV channels like MTV
+
+    - Spark monitors online video game players for bad behavior and adjusts the player
+        interactions in real time.
+
+
+
+- Spark DataFrames
+
+    - A DataFrame is both a data container and an API.
+    - Data is represented in (strongly typed) columns and rows.
+    - The schema can be accessed, and columns can easily be added or removed.
+    - UDFs can be written to access the data.
+    - Are immutable, we can create new DataFrames.
+
+
+       DataFrame
+       -------------------------------------------
+       Dataset<Row>
+       ROW[Col1, Col2, ..., ColN]
+       ROW[Col1, Col2, ..., ColN]
+       -------------------------------------------
+       Partition1   Partition2  ...  PartitionN
