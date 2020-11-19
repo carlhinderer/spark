@@ -25,6 +25,33 @@
 
 
 
+- Adding the ch02 Table
+
+    1. The 'ch02' table needs to be created with 'sparkuser' as the owner.  By default,
+         you cannot switch users in Postgres since UNIX accounts are used for 
+         authentication, and you are logged in as the 'postgres' user.  To change this so you 
+         can log in as users and type in the passwords, need to change the 
+         '/etc/postgresql/10/main/pg_hba.conf' file.
+
+         # Old entry in pg_hba.conf
+         --------------------------------
+         # TYPE DATABASE USER ADDRESS METHOD
+         local  all      all          peer
+
+
+         # New entry in pg_hba.conf
+         --------------------------------
+         # TYPE DATABASE USER ADDRESS METHOD
+         local  all      all          md5
+
+
+    2. Now, we can create the table we need.
+
+        > \c sparkdb sparkuser
+        > CREATE TABLE ch02(lname text, fname text, name text);
+
+
+
 - Getting Postgres Driver to Work
 
     1. Had to download the Postgres JDBC driver and put it at 
@@ -32,10 +59,6 @@
 
     2. Had to pass the location of the jar to spark-submit
         $ spark-submit --jars /usr/share/java/postgresql-42.2.18.jar CsvToRelational.py
-
-    3. For some reason, I can't get the insert into the database to complete if I create
-         the table in psql.  It only works if the table is created by the JDBC write.
-         Once it exists, it can be appended to.
 
 
 
