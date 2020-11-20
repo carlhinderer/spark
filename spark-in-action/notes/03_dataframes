@@ -101,11 +101,58 @@
 
 - Data is Stored in Partitions
 
+    - Data is not physically stored in the DataFrame, it is stored in partitions.
+        Partitions are not directly accessible through the DataFrames.  You have
+        to look at the RDDs for that.
+
+    - In our case, we only have a single partition when working locally.  In a cluster,
+        the number of partitions is determined by the number of nodes and the size of
+        the dataset.
+
+    - To work with partitions directly:
+
+        # Current number of partitions
+        partition_count = df.rdd.getNumPartitions()
+
+        # Repartition
+        df = df.repartition(4)
+
+
 
 - Digging in the Schema
 
+    - We can get information about the schema in various formats.
+
+        # Inspect the schema
+        schema = df.schema
+        
+        # Schema as a tree
+        df.printSchema()
+        
+        # Schema as a string
+        print(df.schema)
+        
+        # Schema as json
+        schema_as_json = df.schema.json()
+        parsed_schema_as_json = json.loads(schema_as_json)
+        print("*** Schema as JSON: {}".format(json.dumps(parsed_schema_as_json, indent=2)))
+
+
 
 - A DataFrame After a JSON Ingestion
+
+    - Ingesting JSON documents is a little more complex than CSVs because of their
+        nested structure.  
+
+    - To access fields in a structure, you can use dot notation.  To access an element 
+        in an array, the 'getItem' function can be used.
+
+        # Get a field
+        .withColumn('datasetId', col('fields.id'))
+
+        # Get an array element by position
+        .withColumn('geoX', col('fields.geolocation').getItem(0))
+
 
 
 - Combining Two DataFrames
