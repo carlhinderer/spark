@@ -64,8 +64,10 @@ def transform_durham_county(durham_df):
 
 
 def union_dataframes(wake_df, durham_df):
-    return True
-
+    combined_df = wake_df.unionByName(durham_df)
+    combined_df.show(5)
+    combined_df.printSchema()
+    print("We have {} records.".format(combined_df.count()))
 
 
 def get_spark_session():
@@ -80,7 +82,7 @@ def run_spark_application():
     wake_df = transform_wake_county(wake_df)
     durham_df = ingest_durham_county(spark)
     durham_df = transform_durham_county(durham_df)
-    union_df = union_dataframes(wake_df, durham_df)
+    union_dataframes(wake_df, durham_df)
     spark.stop()
 
 
