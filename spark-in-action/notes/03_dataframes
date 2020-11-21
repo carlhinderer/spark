@@ -157,17 +157,84 @@
 
 - Combining Two DataFrames
 
+    - Now, we want to combine the 2 DataFrames we have been using.  In order to do this,
+        the schemas in the DataFrames must match exactly.  
+
+    - The 'union()' method doesn't check the column names, it just unions the columns in 
+        order.  This can lead to inconsistent data or a program stop if you're not 
+        careful.
+
+        >>> df = df1.union(df2)
+
+    - The 'unionByName' is safer, since it actually matches up the columns by name.
+
+        >>> df = df1.unionByName(df2)
+
+    - Typically, when you load a small (<128 MB) dataset into a DataFrame, only one 
+        partition will be created.  However, in this scenario, a partition will be created
+        for each of the 2 original DataFrames.  Joining them will create a new unique
+        DataFrame, which will rely on the 2 original partitions.
+
+
 
 - The DataFrame is a Dataset<Row>
 
+    - Datasets from any POJO (Plain Old Java Object) can be converted into a DataFrame.
+        The DataFrame itself is a Dataset<Row>.
 
-- Reusing POJOs
+    - The advantage of using the 'Row' type is that is uses Tungsten for storage.  
+        
+    - Project Tungsten is an integrated part of Spark that focuses on memory management,
+        binary processing, cache-aware computation, and code generation.  It manages
+        large blocks of memory, as opposed to the JVM, which garbage collects individual
+        objects.
+
 
 
 - Creating a Dataset of Strings
+
+    - To create a DataSet of strings:
+
+        import java.util.Arrays;
+        import java.util.List;
+
+        import org.apache.spark.sql.Dataset;
+        import org.apache.spark.sql.Encoders;
+
+        # Create POJO
+        String[] stringList = new String[] { "Jean", "Liz", "Pierre", "Lauric" };
+        List<String> data = Arrays.asList(stringList);
+
+        # Create DataSet from POJO
+        Dataset<String> ds = spark.createDataset(data, Encoders.STRING());
+        ds.show();
+        ds.printSchema();
+
+        # Convert DataSet to DataFrame
+        Dataset<Row> df = ds.toDF();
+        df.show();
+        df.printSchema();
+
 
 
 - Converting Back and Forth
 
 
+
 - DataFrame's Ancestor - The RDD
+
+    - Prior to DataFrames, Spark used RDDs exclusively.  RDDs were defined by Matei
+        Zaharia as a 'distributed memory abstraction that lets programmers perform in-memory
+        computations on large clusters in a fault-tolerant manner'.
+
+    - The idea of RDDs was to build a reliable set of nodes.  If one fails, another takes the
+        relay.  This is similar to the idea of a RAID 5 disk architecture. 
+
+    - Dataframes and DataSets are built on top of RDDs. 
+
+    - RDDs are much more difficult to work with than DataFrames, and should rarely be
+        used directly.  You may want to use them when:
+
+        1. You do not need a schema at all.
+        2. You are developing low-level transformations and actions.
+        3. You have legacy code.
