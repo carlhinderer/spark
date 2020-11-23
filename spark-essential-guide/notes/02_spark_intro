@@ -10,7 +10,7 @@ CHAPTER 2 - SPARK INTRO
 
         - maintaining information about the Spark Application
         - responding to a user’s program or input
-        - analyzing, distributing, and scheduling work across the executors 
+        - analyzing, distributing, and scheduling work across the executors
 
 
     - The driver process is absolutely essential—it’s the heart of a Spark Application and maintains 
@@ -23,10 +23,11 @@ CHAPTER 2 - SPARK INTRO
         driver node.
 
 
-    - The cluster manager can be one of three core cluster managers: Spark’s standalone cluster manager,
-        YARN, or Mesos. This means that there can be multiple Spark Applications running on a cluster 
-        at the same time.  The user can specify how many executors should fall on each node through 
-        configurations.
+    - The cluster manager can be one of three core cluster managers: 
+
+        - Spark’s standalone cluster manager,
+        - YARN
+        - Mesos
 
 
         Driver Process             Executors
@@ -46,11 +47,9 @@ CHAPTER 2 - SPARK INTRO
         ------------------------------------------------------------
 
 
-    - Note that Spark, in addition to its cluster mode, also has a local mode. The driver and executors 
-        are simply processes, which means that they can live on the same machine or different machines. 
-        In local mode, the driver and executurs run (as threads) on your individual computer instead of 
-        a cluster. We wrote this book with local mode in mind, so you should be able to run everything 
-        on a single machine.
+    - Note that Spark, in addition to its cluster mode, also has a local mode. The driver and 
+        executors are simply processes, which means that they can live on the same machine or 
+        different machines. 
 
 
     - Here are the key points to understand about Spark Applications at this point:
@@ -92,9 +91,9 @@ CHAPTER 2 - SPARK INTRO
         and columns. The list that defines the columns and the types within those columns is called 
         the schema. You can think of a DataFrame as a spreadsheet with named columns. 
 
-    - Unlike Python/R DataFrames, Spark DataFrames exist on multiple machines.  However, because Spark 
-        has language interfaces for both Python and R, it’s quite easy to convert Pandas (Python) 
-        DataFrames to Spark DataFrames, and R DataFrames to Spark DataFrames.
+    - Unlike Python/R DataFrames, Spark DataFrames exist on multiple machines.  However, because 
+        Spark has language interfaces for both Python and R, it’s quite easy to convert Pandas 
+        (Python) DataFrames to Spark DataFrames, and R DataFrames to Spark DataFrames.
 
 
 
@@ -102,8 +101,7 @@ CHAPTER 2 - SPARK INTRO
 
     - To allow every executor to perform work in parallel, Spark breaks up the data into chunks 
         called partitions.  A partition is a collection of rows that sit on one physical machine in 
-        your cluster.  A DataFrame’s partitions represent how the data is physically distributed 
-        across the cluster of machines during execution. 
+        your cluster.  
 
     - If you have one partition, Spark will have a parallelism of only one, even if you have 
         thousands of executors. If you have many partitions but only one executor, Spark will still 
@@ -125,23 +123,21 @@ CHAPTER 2 - SPARK INTRO
         divisBy2 = myRange.where("number % 2 == 0")
 
 
-    - Notice that these transformations return no output.  This is because we specified only an 
-        abstract transformation, and Spark will not act on transformations until we call an action. 
-        Transformations are the core of how you express your business logic using Spark. There are 
+    - Transformations are the core of how you express your business logic using Spark. There are 
         two types of transformations: those that specify 'narrow dependencies', and those that specify 
         'wide dependencies'.
 
     - Transformations consisting of narrow dependencies (we’ll call them narrow transformations) are 
-        those for which each input partition will contribute to only one output partition. In the 
-        preceding code snippet, the where statement specifies a narrow dependency, where only one 
-        partition contributes to at most one output partition.
+        those for which each input partition will contribute to only one output partition.
 
     - A wide dependency (or wide transformation) style transformation will have input partitions
         contributing to many output partitions. You will often hear this referred to as a shuffle 
-        whereby Spark will exchange partitions across the cluster. With narrow transformations, Spark 
-        will automatically perform an operation called 'pipelining', meaning that if we specify 
-        multiple filters on DataFrames, they’ll all be performed in-memory. The same cannot be said 
-        for shuffles. When we perform a shuffle, Spark writes the results to disk.
+        whereby Spark will exchange partitions across the cluster. 
+
+    - With narrow transformations, Spark will automatically perform an operation called 'pipelining', 
+        meaning that if we specify multiple filters on DataFrames, they’ll all be performed in-memory. 
+        The same cannot be said for shuffles. When we perform a shuffle, Spark writes the results to 
+        disk.
 
 
 
@@ -154,21 +150,14 @@ CHAPTER 2 - SPARK INTRO
 
     - By waiting until the last minute to execute the code, Spark compiles this plan from your raw 
         DataFrame transformations to a streamlined physical plan that will run as efficiently as 
-        possible across the cluster. This provides immense benefits because Spark can optimize the 
-        entire data flow from end to end. An example of this is something called predicate pushdown on
-        DataFrames. If we build a large Spark job but specify a filter at the end that only requires us 
-        to fetch one row from our source data, the most efficient way to execute this is to access 
-        the single record that we need. Spark will actually optimize this for us by pushing the filter 
-        down automatically.
+        possible across the cluster.
 
 
 
 - Actions
 
     - Transformations allow us to build up our logical transformation plan. To trigger the 
-        computation, we run an action. An action instructs Spark to compute a result from a series of
-        transformations. The simplest action is count, which gives us the total number of records in 
-        the DataFrame:
+        computation, we run an action.
 
         # This action causes all computations to execute
         >>> divisBy2.count()
@@ -216,9 +205,7 @@ CHAPTER 2 - SPARK INTRO
         head /data/flight-data/csv/2015-summary.csv
 
 
-    - Spark includes the ability to read and write from a large number of data sources.  To read
-        this data, we will use a DataFrameReader that is associated with our SparkSession. In doing 
-        so, we will specify the file format as well as any options we want to specify. 
+    - Spark includes the ability to read and write from a large number of data sources.
 
       In our case, we want to do something called schema inference, which means that we want Spark to 
         take a best guess at what the schema of our DataFrame should be. We also want to specify that 
@@ -226,8 +213,8 @@ CHAPTER 2 - SPARK INTRO
 
       To get the schema information, Spark reads in a little bit of the data and then attempts to 
         parse the types in those rows according to the types available in Spark. You also have the 
-        option of strictly specifying a schema when you read in data (which we recommend in 
-        production scenarios.
+        option of strictly specifying a schema when you read in data (recommended in production 
+        scenarios).
 
 
         # Read the csv file
@@ -272,51 +259,16 @@ CHAPTER 2 - SPARK INTRO
 
     - The logical plan of transformations that we build up defines a lineage for the DataFrame so 
         that at any given point in time, Spark knows how to recompute any partition by performing 
-        all of the operations it had before on the same input data. This sits at the heart of Spark’s
-        programming model—functional programming where the same inputs always result in the same 
-        outputs when the transformations on that data stay constant.
-
-      We do not manipulate the physical data; instead, we configure physical execution 
-        characteristics through things like the shuffle partitions parameter that we set a few moments 
-        ago.  We ended up with five output partitions because that’s the value we specified in the 
-        shuffle partition. 
-
-      You can change this to help control the physical execution characteristics of your Spark jobs. 
-        Go ahead and experiment with different values and see the number of partitions yourself. In
-        experimenting with different values, you should see drastically different runtimes. 
-
-      Remember that you can monitor the job progress by navigating to the Spark UI on port 4040 to 
-        see the physical and logical execution characteristics of your jobs.
+        all of the operations it had before on the same input data.
 
 
 
 - DataFrames and SQL
 
-    - Now, we'll work through a more complex example, and follow along in both DataFrames and
-        SQL.  Spark can run the same transformations, regardless of the language, in the exact
-        same way.  You can express your business logic in SQL or in DataFrames (in R, Python,
-        Scala, or Java) and Spark will compile that logic down to an underlying plan before
-        executing your code.
-
-      With Spark SQL, you can register any DataFrame as a table or view.  With Spark SQL, you can 
-        register any DataFrame as a table or view (a temporary table) and query it using pure SQL. There is 
-        no performance difference between writing SQL queries or writing DataFrame code, they both “compile” 
-        to the same underlying plan that we specify in DataFrame code.
-
-
-    -  You can make any DataFrame into a table or view with one simple method call:
+    -  With Spark SQL, you can register any DataFrame as a table or view and query it in ANSI SQL.
 
        # Create a table from a DataFrame
        >>> flightData2015.createOrReplaceTempView("flight_data_2015")
-
-
-       Now we can query our data in SQL. To do so, we’ll use the spark.sql function (remember, spark is our 
-         SparkSession variable) that conveniently returns a new DataFrame. Although this might seem a bit 
-         circular in logic—that a SQL query against a DataFrame returns another DataFrame—it’s actually quite 
-         powerful. This makes it possible for you to specify transformations in the manner most convenient to 
-         you at any given point in time and not sacrifice any efficiency to do so! To understand that this is 
-         happening, let’s take a look at two explain plans:
-
 
        >>> sqlWay = spark.sql("""
                               SELECT DEST_COUNTRY_NAME, count(1)
@@ -333,6 +285,7 @@ CHAPTER 2 - SPARK INTRO
        +- Exchange hashpartitioning(DEST_COUNTRY_NAME#182, 5)
           +- *HashAggregate(keys=[DEST_COUNTRY_NAME#182], functions=[partial_count(1)])
              +- *FileScan csv [DEST_COUNTRY_NAME#182] ...
+
        == Physical Plan ==
        *HashAggregate(keys=[DEST_COUNTRY_NAME#182], functions=[count(1)])
        +- Exchange hashpartitioning(DEST_COUNTRY_NAME#182, 5)
@@ -340,17 +293,13 @@ CHAPTER 2 - SPARK INTRO
              +- *FileScan csv [DEST_COUNTRY_NAME#182] ...
 
 
-       Notice that these plans compile to the exact same underlying plan!
+       Notice that these plans compile to the exact same underlying plan.
 
 
 
 - Summary Statistics From SQL
 
-    - Let’s pull out some interesting statistics from our data. One thing to understand is that DataFrames 
-        (and SQL) in Spark already have a huge number of manipulations available. There are hundreds of 
-        functions that you can use and import to help you resolve your big data problems faster. 
-
-      We will use the 'max' function, to establish the maximum number of flights to and from any given 
+    - We will use the 'max' function, to establish the maximum number of flights to and from any given 
         location. This just scans each value in the relevant column in the DataFrame and checks whether 
         it’s greater than the previous values that have been seen. This is a transformation, because we 
         are effectively filtering down to one row.
@@ -362,13 +311,11 @@ CHAPTER 2 - SPARK INTRO
       # In Python
       >>> from pyspark.sql.functions import max
       >>> flightData2015.select(max("count")).take(1)
+      370,002
 
 
-    - Great, that’s a simple example that gives a result of 370,002. Let’s perform something a bit more 
-        complicated and find the top five destination countries in the data. This is our first multi-
-        transformation query, so we’ll take it step by step. Let’s begin with a fairly straightforward 
-        SQL aggregation.
-
+    - Let’s perform something a bit more complicated and find the top five destination countries 
+        in the data. 
 
       # in Python
       >>> maxSql = spark.sql("""
@@ -418,51 +365,43 @@ CHAPTER 2 - SPARK INTRO
       +-----------------+-----------------+
 
 
-    - Now there are seven steps that take us all the way back to the source data. You can see this in the 
-        explain plan on those DataFrames. This execution plan is a directed acyclic graph (DAG) of 
+    - Now there are seven steps that take us all the way back to the source data. You can see this in
+        the explain plan on those DataFrames. This execution plan is a directed acyclic graph (DAG) of 
         transformations, each resulting in a new immutable DataFrame, on which we call an action to 
         generate a result.
 
-
-      1. The first step is to read in the data. We defined the DataFrame previously but, as a reminder, 
-           Spark does not actually read it in until an action is called on that DataFrame or one derived 
-           from the original DataFrame.
+      1. The first step is to read in the data. Spark does not actually read it in until an action is 
+           called on that DataFrame or one derived from the original DataFrame.
 
       2. The second step is our grouping; technically when we call groupBy, we end up with a 
-           RelationalGroupedDataset, which is a fancy name for a DataFrame that has a grouping specified 
-           but needs the user to specify an aggregation before it can be queried further. We basically 
-           specified that we’re going to be grouping by a key (or set of keys) and that now we’re going to 
-           perform an aggregation over each one of those keys.
+           RelationalGroupedDataset. We basically specified that we’re going to be grouping by a 
+           key (or set of keys) and that now we’re going to perform an aggregation over each one 
+           of those keys.
 
-      3. Therefore, the third step is to specify the aggregation. Let’s use the sum aggregation method. 
-           This takes as input a column expression or, simply, a column name. The result of the sum method 
-           call is a new DataFrame. You’ll see that it has a new schema but that it does know the type of 
-           each column. It’s important to reinforce (again!) that no computation has been performed. This 
-           is simply another transformation that we’ve expressed, and Spark is simply able to trace our 
-           type information through it.
+      3. Therefore, the third step is to specify the aggregation. Let’s use the sum aggregation 
+           method. This takes as input a column expression or, simply, a column name. The result 
+           of the sum method call is a new DataFrame. You’ll see that it has a new schema but that 
+           it does know the type of each column. It’s important to reinforce (again!) that no 
+           computation has been performed.
 
-      4. The fourth step is a simple renaming. We use the withColumnRenamed method that takes two arguments, 
-           the original column name and the new column name. Of course, this doesn’t perform computation: 
-           this is just another transformation!
+      4. The fourth step is a simple renaming. We use the withColumnRenamed method that takes two 
+           arguments, the original column name and the new column name. Of course, this doesn’t 
+           perform computation: this is just another transformation!
 
-      5. The fifth step sorts the data such that if we were to take results off of the top of the DataFrame, 
-           they would have the largest values in the destination_total column.
+      5. The fifth step sorts the data such that if we were to take results off of the top of the 
+           DataFrame, they would have the largest values in the destination_total column.
 
 
-    - You likely noticed that we had to import a function to do this, the desc function. You might also have 
-        noticed that desc does not return a string but a Column. In general, many DataFrame methods will 
-        accept strings (as column names) or Column types or expressions. Columns and expressions are actually 
-        the exact same thing.
+    - We had to import a function to do this, the desc function, which does not return a string but 
+        a Column. In general, many DataFrame methods will accept strings (as column names) or Column 
+        types or expressions. Columns and expressions are actually the exact same thing.
 
 
+    - Penultimately, we’ll specify a limit. This just specifies that we only want to return the first 
+        five values in our final DataFrame instead of all the data.
 
-    - Penultimately, we’ll specify a limit. This just specifies that we only want to return the first five 
-        values in our final DataFrame instead of all the data.
-
-      The last step is our action! Now we actually begin the process of collecting the results of our DataFrame, 
-        and Spark will give us back a list or array in the language that we’re executing. To reinforce all of 
-        this, let’s look at the explain plan for the previous query:
-
+      The last step is our action. To reinforce all of this, let’s look at the explain plan for the 
+        previous query:
 
         >>> flightData2015\
                     .groupBy("DEST_COUNTRY_NAME")\
@@ -480,14 +419,3 @@ CHAPTER 2 - SPARK INTRO
                  +- InMemoryTableScan [DEST_COUNTRY_NAME#7323, count#7325L]
                        +- InMemoryRelation [DEST_COUNTRY_NAME#7323, ORIGIN_COUNTRY_NA...
                              +- *Scan csv [DEST_COUNTRY_NAME#7578,ORIGIN_COUNTRY_NAME...
-
-
-        Although this explain plan doesn’t match our exact “conceptual plan,” all of the pieces are there. You 
-          can see the limit statement as well as the orderBy (in the first line). You can also see how our 
-          aggregation happens in two phases, in the partial_sum calls. This is because summing a list of numbers is 
-          commutative, and Spark can perform the sum, partition by partition. Of course we can see how we read in 
-          the DataFrame, as well.
-
-        Naturally, we don’t always need to collect the data. We can also write it out to any data source that Spark 
-          supports. For instance, suppose we want to store the information in a database like PostgreSQL or write 
-          them out to another file.

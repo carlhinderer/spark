@@ -5,9 +5,7 @@ CHAPTER 1 - APACHE SPARK
 - Apache Spark
 
     - Spark is a unified computing engine and set of libraries for parallel data processing
-        on computer clusters.  It is the most actively developed open source engine for
-        this task, making it the standard tool for any developer or data scientist interested
-        in big data.
+        on computer clusters.
 
     - Spark supports the Python, Java, Scala, and R programming languages and includes 
         libraries for diverse tasks ranging from SQL to streaming to machine learning.
@@ -117,7 +115,8 @@ CHAPTER 1 - APACHE SPARK
         these APIs would be highly interoperable.
 
     - In 2013, Spark was given to the Apache Software Foundation.  The early AMPlab team launched
-        DataBricks.
+        DataBricks.  Spark 1.0 was released in 2014.  Spark 2.0 was released in 2016.  Spark 3.0
+        was released in 2020.
 
 
 
