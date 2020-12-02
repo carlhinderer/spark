@@ -1,0 +1,96 @@
+-----------------------------------------------------------------------
+|  CHAPTER 5 - BUILDING AN APP FOR DEPLOYMENT                         |
+-----------------------------------------------------------------------
+
+- An Ingestionless Example
+
+    - In this chapter, we'll learn about the 3 ways to interact with Spark:
+
+        1. Local mode (which we've been using)
+        2. Cluster mode
+        3. Interactive mode
+
+
+    - To keep the cluster and deployment concepts simple, we will build an app that 
+        doesn't need to ingest any data.  We will use Spark to self-generate a large
+        random dataset to estimate Pi.
+
+
+    - We use the Monte Carlo method of estimating Pi.  We get random points on a quadrant
+        of the unit circle.  
+
+        0 <= x <= 1
+        0 <= y <= 1
+
+      If sqrt(x**2 + y**2) <= 1, the point is within the unit circle.
+      If sqrt(x**2 + y**2) > 1, the point is out of the unit circle.
+
+      As we add more and more points, the fraction of points within the circle will approach Pi/4.
+
+
+    - Our Spark application will:
+
+        1. Open a Spark session.
+
+        2. Use Spark to create a dataset contianing one row per dart throw.
+
+        3. Create a dataset using the result of each throw.
+
+        4. Sum the count of throws within the unit circle.
+
+        5. Compute the ratio of throws in both zones and multiply it by 4 to approximate Pi.
+
+
+
+- First Version of Pi Approximation
+
+    - We'll slice up 1 million throws into 10 separate slices.  Remember that nothing will
+        actually be executed until we call an action.
+
+        # Create the slices
+        slices = 10
+        number_of_throws = 100000 * slices
+
+
+    - Next, we'll create a Python list of integers, and convert it to a DataFrame to 
+        parallelize the processing.
+
+        # Create the SparkSession
+        spark = SparkSession.builder.appName("PySpark Pi").master("local[*]").getOrCreate()
+
+        # Create a Python list with 1 million integers
+        num_list = []
+        for x in range(number_of_throws):
+            num_list.append(x)
+
+        # Convert to a DataFrame to dispatch the processing over as many nodes as possible
+        incremental_rdd = spark.sparkContext.parallelize(num_list)
+
+
+    - Next, we'll create a function to throw the darts, and then map that function over each
+        of our trials.
+
+        # Function for throwing darts
+        from random import random
+
+        def throw_darts(_):
+            x = random() * 2 - 1
+            y = random() * 2 - 1
+            return 1 if x ** 2 + y ** 2 <= 1 else 0
+
+        # Map the function
+        darts_rdd = incremental_rdd.map(throw_darts)
+
+
+    - To get our result, we'll use the reduce function.
+
+        # Get the results of the dart throws
+        from operator import add
+
+        darts_in_circle = darts_rdd.reduce(add)
+
+
+    - Finally, we compute our estimation of Pi and print it.
+
+        pi_estimate = 4.0 * darts_in_circle / number_of_throws
+        print("Pi is roughly {}".format(pi_estimate)
