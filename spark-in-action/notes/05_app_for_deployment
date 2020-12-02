@@ -179,6 +179,10 @@
                                                     -----------------------------
 
 
+    - Note that the Application Node, Master Node, and Worker Node could all be the same
+        physical node.
+
+
     - The Application Node contains the application code, which is called the 'driver program'
         as it drives Spark.  The application node also contains the addtional JARs your
         application needs.  The application will open a session on Spark using the Spark
@@ -190,3 +194,87 @@
 
     - The workers have the application JARs and the Spark libraries to execute the code.
         They also have the binaries to connect to the master: the worker scripts.
+
+
+
+- Spark vs Hadoop
+
+    - Hadoop
+
+        - Open source and governed by ASF like Spark
+        - Popular implementation of MapReduce
+        - Complex ecosystem
+        - Has constraints on the type of algorithms (mostly MapReduce) and storage (mostly disk)
+
+
+    - Spark uses some Hadoop libraries, which are contained in the Spark runtime you are
+        deploying on each node.
+
+
+
+- Uber JARs
+
+    - In some cases, to ease deployment, you will want to create an uber JAR containing your
+        application and its dependencies.  In this case, your uber JAR should never include
+        Hadoop or Spark libraries, as they will already be deployed.
+
+
+    - A JAR is a Java archive file.  When you compile all of your .java files into a .class,
+        you combine them all into a JAR file.
+
+
+    - An uber JAR (aka a super JAR or fat JAR) contains most, if not all, of the dependencies
+        of your application.
+
+
+
+- Running Applications on a Cluster
+
+    - There are 2 ways to run an application on a cluster:
+
+        1. You submit a job using the 'spark-submit' shell and a JAR of your application.
+
+        2. You specify the master in your application, then run your code.
+
+
+    - Whether you submit a job or set the cluster's master in your application, you need to:
+
+        1. Build a JAR of your application.
+
+        2. Make sure all the JARs that your application depends on are on each node or in the
+             uber JAR.
+
+
+
+- Interactive Mode in Scala and Python
+
+    - You can also use Spark in full interactive mode, which allows you to manipulate
+        big data in a shell.  
+
+
+    - In addition to the shell, you can use notebooks such as Jupyter and Apache Zeppelin.
+
+
+    - Here is what the interactive environment looks like:
+
+
+                                                      Worker Node
+                                                    -----------------------------
+                                                    | Application JARs          |
+                                                    |           [Cache]         |
+              Shell Node                            | Executor  [Task] [Task]   |
+         ----------------------   ---------------   -----------------------------
+         |  Interactive Code  |   | Master Node |
+         |  Application JARs  |   ---------------     Worker Node
+         |  SparkSession      |                     -----------------------------
+         ----------------------                     | Application JARs          |
+                                                    |           [Cache]         |
+                                                    | Executor  [Task] [Task]   |
+                                                    -----------------------------
+
+                                                      Worker Node
+                                                    -----------------------------
+                                                    | Application JARs          |
+                                                    |           [Cache]         |
+                                                    | Executor  [Task] [Task]   |
+                                                    -----------------------------
