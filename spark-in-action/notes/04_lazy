@@ -1,0 +1,40 @@
+-----------------------------------------------------------------------
+|  CHAPTER 4 - FUNDAMENTALLY LAZY                                     |
+-----------------------------------------------------------------------
+
+- Transformations and Actions
+
+    - We've typically been ending most examples with the 'show()' method, which is good
+        for debugging, but isn't the typical end goal.
+
+
+    - The 'collect()' method is used more often in the real world.  It allows you to
+        retrieve the entire DataFrame in your native language.
+
+
+    - In our lab for this chapter, we'll perform 3 experiments:
+
+        1. Load a dataset and perform a collection action.
+
+        2. Load a dataset, perform a transformation, then perform a collection action.
+
+        3. Load a dataset, perform a transformation, drop a column, then perform a
+             collection action.  This will illustrate Spark's laziness.
+
+
+
+- We'll look at a dataset of teen birth rates in each county in the US.  These are the
+    columns in the dataset:
+
+
+    Column name in dataset    Type        Comment
+    ---------------------------------------------------------------------------------------------
+    Year                       Numeric
+    State                      String
+    County                     String
+    State FIPS Code            Integer     State code in US Federal Information Processing Standards
+    County FIPS Code           Integer     County code in the US FIPS
+    Combined FIPS Code         Integer     Combination of the state and county FIPS code in one
+    Birth Rate                 Decimal     Teen birth rate: births per 1,000 females ages 15–19 in a given year
+    Lower Confidence Limit     Decimal     Column renamed lcl later
+    Upper Confidence Limit     Decimal     Column renamed ucl later
