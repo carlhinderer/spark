@@ -94,3 +94,13 @@
 
         pi_estimate = 4.0 * darts_in_circle / number_of_throws
         print("Pi is roughly {}".format(pi_estimate)
+
+
+
+- Using Lambda Functions
+
+    - We can also pass lambda functions into the 'map' and 'reduce' operations to make
+        the syntax simpler if we want.
+
+        # Get the results of the dart throws
+        darts_in_circle = darts_rdd.reduce(lambda a,b: a+b)
