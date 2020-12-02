@@ -104,3 +104,89 @@
 
         # Get the results of the dart throws
         darts_in_circle = darts_rdd.reduce(lambda a,b: a+b)
+
+
+
+- Spark Local Mode
+
+    - Local mode enables all Spark components to run on a single machine.
+
+            Application Node
+        ------------------------------
+        |    Application Code        |
+        |    Application JARs        |
+        |    Spark Session           |
+        |                            |
+        |    Executor   [Cache]      |
+        |            [Task] [Task]   |
+        ------------------------------
+
+
+    - Allows for fast onboarding of new developers, and is extremely useful for development
+        in general.
+
+
+    - By default, local mode will run with one thread.
+
+        SparkSession spark = SparkSession.builder()
+            .appName("My application")
+            .master("local")
+            .getOrCreate();
+
+
+    - You can also pass in the number of threads you want to use (2 in this case).
+
+        SparkSession spark = SparkSession.builder()
+            .appName("My application")
+            .master("local[2]")
+            .getOrCreate();
+
+
+
+- Spark Cluster Mode
+
+    - In cluster mode, Spark is a multinode system with a master and workers.
+
+    - The master dispatches the workload to the worker, which then processes it.
+
+    - Starting several workers on the same worker node is possible, but it doesn't seem
+        like there are any benefits to this.  A worker will use all of the available or
+        configured resources.  
+
+
+    - Here is what the cluster environment looks like:
+
+
+                                                      Worker Node
+                                                    -----------------------------
+                                                    | Application JARs          |
+                                                    |           [Cache]         |
+           Application Node                         | Executor  [Task] [Task]   |
+         ----------------------   ---------------   -----------------------------
+         |  Application Code  |   | Master Node |
+         |  Application JARs  |   ---------------     Worker Node
+         |  SparkSession      |                     -----------------------------
+         ----------------------                     | Application JARs          |
+                                                    |           [Cache]         |
+                                                    | Executor  [Task] [Task]   |
+                                                    -----------------------------
+
+                                                      Worker Node
+                                                    -----------------------------
+                                                    | Application JARs          |
+                                                    |           [Cache]         |
+                                                    | Executor  [Task] [Task]   |
+                                                    -----------------------------
+
+
+    - The Application Node contains the application code, which is called the 'driver program'
+        as it drives Spark.  The application node also contains the addtional JARs your
+        application needs.  The application will open a session on Spark using the Spark
+        libraries.
+
+
+    - The Master Node contains the Spark libraries, which include the code to run as a master.
+
+
+    - The workers have the application JARs and the Spark libraries to execute the code.
+        They also have the binaries to connect to the master: the worker scripts.
