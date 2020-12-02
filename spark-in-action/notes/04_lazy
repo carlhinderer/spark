@@ -45,4 +45,29 @@
 
 
 
-- 
+- Here are the resulting running times:
+
+    1. Load an initial dataset and copy it 60 times.
+
+         20,770 ms
+
+
+    2. Load a dataset, copy it 60 times, create one column based on an expression (computation
+         of an average), and duplicate 2 columns.
+
+         34,061 ms
+
+
+    3. Load an initial dataset, copy it 60 times, create one column based on an expression 
+         (computation of an average), duplicate two columns, and delete the three columns.
+
+        24,909 ms
+
+
+
+- Catalyst
+
+    - Spark turns your series of transformations into a DAG.  Catalyst is in charge of 
+        optimizing this graph.
+
+    - You can see any query plan using the 'explain()' method.
