@@ -1,0 +1,94 @@
+-----------------------------------------------------------------------
+|  CHAPTER 6 - DEPLOYING THE SIMPLE APP                               |
+-----------------------------------------------------------------------
+
+- CI/CD
+
+    - Continuous Integration
+
+        - Merge all developers' working copies into the mainline at frequent intervals
+        - XP recommends doing this more than once per day
+        - Goal is prevent integration problems
+        - Used in combination with unit tests and TDD
+        - Eventually, build servers were created to run tests after each commit
+
+    - Continuous Delivery
+
+        - Produce software in short cycles
+        - Software can be reliably released at any time, but decision is still made by human
+        - Build, test, and release with greater frequency
+        - Reduces cost, time, and risk
+
+    - Continuous Deployment
+
+        - Any change that passes test is automatically deployed to production
+
+
+
+- Spark Components and Their Interactions
+
+
+                ------------------------- #4 --------------------------------
+                |                                                           |
+                v                                                           |
+    Driver or Application                                              Worker Node
+                                                        ---- #2 --->            [Cache]
+        SparkSession               Master/              |              Executor [Task] [Task]
+       (SparkContext)---- #1 --->  ClusterManager  -----|                   |
+               ^                                        |                   | #3
+               |                                        |                   v
+               |                                        --- #2 --->    Worker Node
+               |                                                                [Cache]
+               |                                                       Executor [Task] [Task]
+               |                                                            |
+               -------------------------- #4 --------------------------------
+
+
+            #1 = The application connects to the cluster manager.
+
+            #2 = The connection between the workers and master.  The workers initiate the 
+                   connection, but data is passed from the master to the workers.
+
+            #3 = Internal link between the executors
+
+            #4 = The executors return results back to the driver.  We must configure firewalls
+                   so that each worker can communicate with the driver.
+
+
+
+- Example - Links in Pi Estimation Program
+
+    private void start(int slices) {
+        intnumberOfThrows = 100000 * slices;
+        ...    
+
+        # Link 1 - The session resides on the cluster manager
+        SparkSession spark = SparkSession
+            .builder()
+            .appName("JavaSparkPi on a cluster")
+            .master("spark://un:7077")
+            .config("spark.executor.memory", "4g")
+            .getOrCreate();
+
+        ...
+
+        List<Integer> l = new ArrayList<>(numberOfThrows);
+        for (inti = 0; i < numberOfThrows; i++) {
+            l.add(i);
+        }
+
+        # Link 2 - The first DataFrame is created in the executor
+        Dataset<Row> incrementalDf = spark
+            .createDataset(l, Encoders.INT())
+            .toDF();
+
+        # This step is added to the DAG, which sits in the Cluster Manager
+        Dataset<Integer> dartsDs = incrementalDf
+            .map(new DartMapper(), Encoders.INT());
+
+        # Link 4 - The result of the reduce operation is brought back to the application
+        intdartsInCircle = dartsDs.reduce(new DartReducer());
+
+        # Print results and stop the session
+        System.out.println("Pi is roughly " + 4.0 * dartsInCircle / numberOfThrows);
+        spark.stop();
