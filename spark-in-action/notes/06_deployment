@@ -92,3 +92,71 @@
         # Print results and stop the session
         System.out.println("Pi is roughly " + 4.0 * dartsInCircle / numberOfThrows);
         spark.stop();
+
+
+
+- Architecture Details
+
+    - Spark applications run as independent processes on a cluster.  The 'SparkSession'
+        object in your application (the driver) coordinates the processes.  There is a
+        unique SparkSession for your application, whether you are in local mode or have
+        10,000 nodes.
+
+      The SparkSession is created when you build it.
+
+        SparkSession spark = SparkSession.builder()
+            .appName("An app")
+            .master("local[*]")
+            .getOrCreate();
+
+
+    - As part of your session, you will also get a 'SparkContext'.  You mostly don't need
+        to interact with it, but if you do (to get infrastructure information or create
+        a custom accumulator), this is how:
+
+        SparkContext sc = spark.sparkContext();
+        System.out.println("Running Spark v" + sc.version());
+
+
+    - The cluster manager allocates resources across applications.  To run on a cluster,
+        the SparkSession can connect to several types of cluster managers.  These include
+        Spark standalone, YARN, Mesos, and Kubernetes.
+
+      One of the cluster manager's roles is to find worker nodes with resources available.
+
+
+    - Once connected, Spark acquires executors on nodes in the cluster, which are JVM
+        processes that run computations and store data for your application.
+
+      Next, the cluster manager sends your application code to the executors.  You do not
+        need to deploy your application on each node.
+
+      Finally, SparkSession sends tasks to the executors to run.
+
+
+
+- Tips for Troubleshooting Spark Architecture
+
+    - The executors must always be able to talk to the driver, even if results are 
+        written somewhere else besides the application itself.  They should not be
+        isolated by a firewall, on a different network, exposing multiple IP addresses,
+        etc.
+
+      Note that communication problems can arise when you are connecting from your 
+        development machine to the cluster.
+
+
+    - Each application gets its own executor processes, which stay up for the duration of
+        the entire application.  This has the advantage of isolating applications from 
+        each other, but be aware that data cannot be shared across multiple Spark
+        applications unless it is written to an external storage system.
+
+
+    - Spark is agnostic to the underlying cluster manager, as long as it can acquire
+        executor processes and they can communicate with each other.
+
+
+    - As the driver schedules tasks on the cluster, it should run physically close to the
+        worker nodes, preferably on the same LAN.  Processes are network intensive, and
+        you reduce latency when the boxes are close together.  This can be tricky in 
+        cloud installations.
