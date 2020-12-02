@@ -278,3 +278,63 @@
                                                     |           [Cache]         |
                                                     | Executor  [Task] [Task]   |
                                                     -----------------------------
+
+
+
+- Running the Scala Shell
+
+    - To run interactive mode in local mode:
+
+        ./spark-shell
+
+
+    - To run interactive mode in cluster mode;
+
+        ./spark-shell --master MASTER_URL
+
+
+    - A few commands:
+
+        # Get Spark version
+        scala> sc.version
+
+        # Also gets Spark version
+        scala> spark.sparkContext.version
+
+
+    - Scala program to estimate Pi:
+
+        import scala.math.random
+
+        val slices = 100
+        val n = (100000L * slices).toInt
+        val count = spark.sparkContext.parallelize(1 until n, slices).map { i =>
+              val x = random * 2 - 1
+              val y = random * 2 - 1
+              if (x*x + y*y <= 1) 1 else 0
+        }.reduce(_ + _)
+        println(s"Pi is roughly ${4.0 * count / (n - 1)}")
+
+
+
+- Running the Python Shell
+
+    - To run pyspark in local mode:
+
+        ./pyspark
+
+      To run pyspark on a cluster:
+
+        ./pyspark --master MASTER_URL
+
+
+    - By default, pyspark will use Python2.  If you want to use Python3 instead, you need to
+        set an environment variable.
+
+        $ export PYSPARK_PYTHON=python3
+
+
+    - To get the Spark version:
+
+        # Get the Spark version
+        >>> spark.version
