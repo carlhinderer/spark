@@ -35,6 +35,14 @@
     State FIPS Code            Integer     State code in US Federal Information Processing Standards
     County FIPS Code           Integer     County code in the US FIPS
     Combined FIPS Code         Integer     Combination of the state and county FIPS code in one
-    Birth Rate                 Decimal     Teen birth rate: births per 1,000 females ages 15–19 in a given year
+    Birth Rate                 Decimal     Births per 1,000 females ages 15–19 in a given year
     Lower Confidence Limit     Decimal     Column renamed lcl later
     Upper Confidence Limit     Decimal     Column renamed ucl later
+
+
+    - This dataset contains lower and upper confidence limits. Confidence limits are the numbers 
+        at the upper and lower end of a confidence interval.
+
+
+
+- 
