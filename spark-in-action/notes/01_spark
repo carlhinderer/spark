@@ -124,7 +124,7 @@
 - Running First Spark App
 
     # Run application
-    $ spark-submit CsvToDataFrame.py
+    $ spark-submit csv_to_dataframe.py
 
     # Run pyspark console instead
     $ pyspark

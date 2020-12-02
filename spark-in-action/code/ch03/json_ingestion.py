@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import (lit,col,concat,split)
+from pyspark.sql.functions import lit, col, concat, split
 import os
 
 parent_dir = '/home/carl/Code/Hadoop/spark/spark-in-action/code'

@@ -58,14 +58,14 @@
         /usr/share/java/postgresql-42.2.18.jar
 
     2. Had to pass the location of the jar to spark-submit
-        $ spark-submit --jars /usr/share/java/postgresql-42.2.18.jar CsvToRelational.py
+        $ spark-submit --jars /usr/share/java/postgresql-42.2.18.jar csv_to_relational.py
 
 
 
 - Connecting to a Master
 
     - For every Spark application, the first step is to connect to the Spark master and get
-        a Spark session.  In this context, we can connecting to Spark in local mode.
+        a Spark session.  In this context, we are connecting to Spark in local mode.
 
 
 
