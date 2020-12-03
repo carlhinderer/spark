@@ -1,0 +1,127 @@
+-----------------------------------------------------------------------
+|  CHAPTER 1 - ADDING AND CONFIGURING VMS                             |
+-----------------------------------------------------------------------
+
+- Creating the Project
+
+    - Create a new project for the Spark cluster, and add nodes
+
+        spark-node-1
+        spark-node-2
+        spark-node-3
+        spark-node-4
+
+
+    - Create firewall exceptions for ports 7077, 8080, and 4040.
+
+    
+
+- Adding the VMs
+
+    - 4 Nodes
+
+        > RAM = 8GB
+        > Disk = 32GB Ubuntu 18.04
+        > Identity and API Access = Default
+        > Allow HTTP Traffic
+
+
+
+- Configuring the VMs
+
+    - Update repos
+
+        $ sudo apt update
+        $ sudo apt -y upgrade
+
+
+    - Install Java 8
+
+        $ sudo apt install openjdk-8-jdk openjdk-8-jre
+
+
+    - Set the JAVA_HOME and JRE_HOME environment variables
+
+        $ sudo vim /etc/environment
+
+        # Add these lines
+        JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+        JRE_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre
+
+
+
+- Installing Spark
+
+    - Download Spark
+
+        # Download Spark
+        $ wget https://downloads.apache.org/spark/spark-3.0.1/spark-3.0.1-bin-hadoop2.7.tgz
+
+        # Extract the tarball
+        $ tar xvf spark-3.0.1-bin-hadoop2.7.tgz
+
+        # Move to /opt/spark
+        $ sudo mv spark-2.4.5-bin-hadoop2.7/ /opt/spark
+
+
+    - Set the Spark Environment
+
+        # Open the bashrc config file
+        $ vim ~/.bashrc
+
+        # Add these lines
+        export SPARK_HOME=/opt/spark
+        export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+        export PYSPARK_PYTHON=/usr/bin/python3
+
+        # Activate the changes
+        source ~/.bashrc
+
+
+
+- Running Spark
+
+    - Now, start a standalone master.
+
+        # Start master
+        $ start-master.sh
+
+        # Verify that process is listening on port 8080
+        $ sudo -tunelp | grep 8080
+
+
+    - We can navigate to the Spark cluster manager console:
+
+        http://34.121.155.80:8080/
+
+      And, we get the Spark master FQDN:
+
+        spark://spark-node-1.us-central1-a.c.spark-cluster-297405.internal:7077
+
+
+    - Now, we can start a worker on the same node.
+
+        $ start-slave.sh spark://spark-node-1.us-central1-a.c.spark-cluster-297405.internal:7077
+
+
+    - Test the shells to make sure they work.
+
+        # Test that the scala shell works
+        $ spark-shell
+
+        $ Test that the python shell works
+        $ pyspark
+
+
+    - If we want to stop the master and worker:
+
+        # Stop slave
+        $ ./stop-slave.sh
+
+        # Stop master
+        $ ./stop-master.sh
+
+
+    - After configuring the other nodes, we can start workers on those also.
+
+        $ start-slave.sh spark://spark-node-1.us-central1-a.c.spark-cluster-297405.internal:7077
