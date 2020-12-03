@@ -160,3 +160,106 @@
         worker nodes, preferably on the same LAN.  Processes are network intensive, and
         you reduce latency when the boxes are close together.  This can be tricky in 
         cloud installations.
+
+
+
+- Building a Cluster
+
+    - Now, we'll learn how to:
+
+        1. Build a cluster
+        2. Set its environment
+        3. Deploy your application
+        4. Run your application
+        5. Analyze the execution logs
+
+
+    - Where should the cluster be installed?
+
+        - 4 nodes total in this example
+        - Can use cloud VMs (target 8GB RAM and 32GB disk)
+
+
+
+- Setting Up the Environment
+
+    - Now that we have defined our environment, we will need to:
+
+        1. Install Spark
+        2. Configure and run Spark
+        3. Download/upload our application
+        4. Run it
+
+
+    - Workers are aka 'slaves'.  This terminology is being phased out, but you'll still see it
+        in command-line scripts.
+
+
+    - We'll assume we have these 4 nodes:
+
+        Node #1
+          hostname: un
+          FQDN: un.oplo.io
+          IP: 10.0.100.81
+          Master and Worker1
+
+        Node #2
+          hostname: deux
+          FQDN: deux.oplo.io
+          IP: 10.0.100.82
+          Worker2
+
+        Node #3
+          hostname: trois
+          FQDN: trois.oplo.io
+          IP: 10.0.100.83
+          Worker3
+
+        Node #4
+          hostname: quatre
+          FQDN: quatre.oplo.io
+          IP: 10.0.100.84
+          Worker4
+
+
+    - We will need to install Spark on every node.  Installation is pretty straightforward.
+        We do not need to install our application on every node.
+
+      For the rest of this chapter, we'll assume Spark has been installed in
+        /opt/apache-spark.
+
+
+    - On the master node, run the master:
+
+        $ cd /opt/apache-spark/sbin
+        $ ./start-master.sh
+
+
+    - Remember that the master does not do much.  So, in this scenario, we'll run a worker
+        on the same node also.
+
+        $ ./start-slave.sh spark://un.7077
+
+
+    - We should check that the ports we need are accessible and not being used by something
+        else.  Typically, they are 7077, 8080, and 4040.  These ports do not need to be
+        open to the internet, just internally.  We can use ping and telnet to check them.
+
+
+    - The master will always need to be started first.  To check that everything is OK, 
+        we navigate in a browser to:
+
+        http://un:8080/
+
+      The web interface is provided by Spark, we don't need to configure a web server or 
+        anything.
+
+
+    - Now, we can go to the next node and start the second worker.
+
+        $ cd /opt/apache-spark/sbin
+        $ ./start-slave.sh spark://un:7077
+
+
+    - Now, if we refresh our browser, we should see the results.  We can start the third and
+        fourth workers, and our physical cluster will be up and running.
