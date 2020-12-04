@@ -231,13 +231,14 @@
 
     - On the master node, run the master:
 
-        $ cd /opt/apache-spark/sbin
+        $ cd /opt/spark/sbin
         $ ./start-master.sh
 
 
     - Remember that the master does not do much.  So, in this scenario, we'll run a worker
         on the same node also.
 
+        $ cd /opt/spark/sbin
         $ ./start-slave.sh spark://un.7077
 
 
@@ -257,9 +258,75 @@
 
     - Now, we can go to the next node and start the second worker.
 
-        $ cd /opt/apache-spark/sbin
+        $ cd /opt/spark/sbin
         $ ./start-slave.sh spark://un:7077
 
 
     - Now, if we refresh our browser, we should see the results.  We can start the third and
         fourth workers, and our physical cluster will be up and running.
+
+
+
+- Building Your Application to Run on the Cluster
+
+    - To deploy our code to the cluster, we have 3 options:
+
+        1. Build an uber JAR with the code and all its dependencies
+
+        2. Build a JAR and make sure all the dependencies are installed on ever node
+             (not recommended)
+
+        3. Clone/pull from a source code repository
+
+
+
+- Building an Uber JAR
+
+    - An uber JAR is an archive containing all the classes needed by your application, 
+        regardless of the number of JARs you had on your class path.
+
+    - Uber JARs can be built with Maven, using the Maven Shade plugin.
+
+    - You'll want to make sure to exclude the Spark and Hadoop classes, as they are
+        large and already available on the target systems.
+
+    - You'll also want to exclude any test files or test infrastructure.
+
+
+
+- Building Using Git and Maven
+
+    - Another option is to transfer the source code and recompile locally.
+
+    - This is likely to be frowned upon by security experts in a production system.
+        However, it can be very handy for a development environment.
+
+    - Access to the source control system from your development server may be an issue.
+        You probably don't want to leave your username and password on the server.
+        Products like BitBucket support public/private keys.
+
+
+
+- What about the data?
+
+    - Spark deploys your application to each node from the master node, but it will
+        not make sure all your executors have access to the data.
+
+    - When you do work with external data, all workers will need to access the data as
+        well.
+
+    - HDFS is a distributed filesystem and is a popular choice for sharing data in a
+        replicated way.
+
+
+    - To deploy the data, we could use:
+
+        1. A shared drive accessible from all the workers, such as SMB/CIFS (Server Message
+             Block / Common Internet File System), NFS (Network File System), and many more.
+             The mount point should be the same on every worker.
+
+        2. A file-sharing service like Nextcloud or Dropbox.  This limits data transfer, since
+             the file is only copied once.  The mount point should be the same on every 
+             worker.
+
+        3. A distributed file system like HDFS
