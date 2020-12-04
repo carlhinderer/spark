@@ -13,8 +13,7 @@ t0 = int(round(time.time() * 1000))
 
 
 # Create the session
-spark = SparkSession.builder.appName("PySpark Pi") \
-    .master("local[*]").getOrCreate()
+spark = SparkSession.builder.appName("PySpark Pi").getOrCreate()
 
 t1 = int(round(time.time() * 1000))
 
