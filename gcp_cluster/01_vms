@@ -14,7 +14,7 @@
 
     - Create firewall exceptions for ports 7077, 8080, and 4040.
 
-    
+
 
 - Adding the VMs
 
@@ -125,3 +125,25 @@
     - After configuring the other nodes, we can start workers on those also.
 
         $ start-slave.sh spark://spark-node-1.us-central1-a.c.spark-cluster-297405.internal:7077
+
+
+
+- Submitting Applications
+
+    - Just pulling application code down from Github.
+
+    - Update code to not specify a SparkSession master.
+
+        spark = SparkSession.builder.appName("PySpark Pi").getOrCreate()
+
+
+    - Run in local mode:
+
+        spark-submit --master local pi_compute.py
+
+
+    - Run in cluster mode:
+
+        ./spark-submit \
+          --master spark://spark-node-1.us-central1-a.c.spark-cluster-297405.internal:7077 \
+          ~/spark/spark-in-action/code/ch05/pi_compute.py

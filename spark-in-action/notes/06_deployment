@@ -330,3 +330,15 @@
              worker.
 
         3. A distributed file system like HDFS
+
+
+
+- Running Applications in the Cluster
+
+    - Submitting an Uber JAR
+
+        $ cd /opt/spark/bin
+
+        $ ./spark-submit  \  
+            --class net.jgp.books. spark.ch05.lab210.piComputeClusterSubmitJob.PiComputeClusterSubmitJobApp \  --master "spark://un:7077" \  <
+            path to>/spark-chapter05-1.0.0-SNAPSHOT.JAR
