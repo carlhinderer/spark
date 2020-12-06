@@ -181,13 +181,81 @@
 
 - The Problem with Traditional File Formats
 
-- Avro
+    - JSON and XML are not easy to split.  When you want your nodes to read part of a file,
+        it is easier if you can split it.  Because of the root element, XML will need rework,
+        which may break the document.  Big data files need to be splittable.
 
-- ORC
 
-- Parquet
+    - CSV cannot store hierarchical information like JSON and CSV can.
+
+
+    - None of these file types are designed to incorporate metadata.
+
+
+    - None of the file formats support easy column addition, deletion, or insertion.
+
+
+    - These formats are quite verbose (especially XML and JSON), which inflates the file size
+        drastically.
+
+
+    - You can't use the binary formats used by most RDBMS's, since every vendor has its own
+        format.
+
+
+
+- Apache Avro is a Schema-Based Serialization Format
+
+    - Avro is a data serialization system, which provides rich data structures in a compact,
+        fast, binary data format.
+
+
+    - Avro was designed for RPCs in a similar way as Google's Protocol Buffers, a popular method
+        for transferring serializable data.
+
+
+    - Avro offers a schema written in JSON.  Avro also supports dynamic modification of the schema.
+        Because it is row-based, it is easy to split.
+
+
+
+- ORC is a Columnar Storage Format
+
+    - Apache ORC (Optimized Row Columnar) is a columnar storage format.  It is ACID-compliant.
+
+
+    - Beyond the stadard datatypes, ORC supports compound types like structs, lists, maps, and
+        unions.  ORC supports compression, which reduces file size and network transfer time.
+
+
+    - ORC was backed by Hortonworks, which was bought by Cloudera.  So, the future of ORC is
+        not yet known.
+
+
+
+- Parquet is also a Columnar Storage Format
+
+    - Like ORC, Apache Parquet is a columnar file format.  It also supports compression, and
+        you can add columns at the end of the schema.  Parquet also supports compound types
+        like lists and maps.
+
+
+    - Parquet is backed by Cloudera, so the future is also unknown, following the merger.
+
+
 
 - Comparing Avro, ORC, and Parquet
+
+    - ORC, Parquet, and Avro share:
+
+        - They are all binary formats.
+        - They embed their schema.  Avro's JSON-based schema offers the most flexibility.
+        - The compress their data.  ORC and Parquet are better at this than Avro.
+
+
+    - Parquet is probably the most popular of the 3, but that may change over time.
+
+
 
 - Ingesting Avro
 
