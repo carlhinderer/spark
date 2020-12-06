@@ -85,8 +85,19 @@
                   .load(JSON_FILE_PATH)
 
 
+    - We can also access nested structures in the JSON document directly:
+
+        new_df = df.withColumn("year", col("fields.year")) \
+                   .withColumn("coordinates", col("geometry.coordinates"))
+
+
 
 - Ingesting a Multiline JSON File
+
+    - 
+
+
+
 
 - Ingesting an XML File
 
