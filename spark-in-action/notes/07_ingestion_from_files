@@ -152,8 +152,8 @@
         to read it.  Here is the loading of the DataFrame:
 
         df = spark.read.format("xml") \
-                .option("rowTag", "row") \
-                .load(XML_FILE_PATH)
+                  .option("rowTag", "row") \
+                  .load(XML_FILE_PATH)
 
 
     - And here we run it, including the DataBricks package:
@@ -165,6 +165,19 @@
 
 
 - Ingesting a Text File
+
+    - With the rise of AI technologies like NLP, processing raw text files is becoming more
+        popular.  
+
+
+    - In this example, we read 'Romeo and Juliet' from Project Guttenberg.  Each line of the
+        book will become a record in our DataFrame.  There is no feature to cut by sentence
+        or word.
+
+        df = spark.read.format("text") \
+                  .load(TEXT_FILE_PATH)
+
+
 
 - The Problem with Traditional File Formats
 
