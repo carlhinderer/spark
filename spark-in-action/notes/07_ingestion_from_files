@@ -52,6 +52,10 @@
                      StructField('url', StringType(), False)])
 
 
+    - A StructField object comprises three fields, name (a string), dataType (a DataType) 
+        and nullable (a bool).
+
+
     - Then we can use the schema when loading the csv:
 
         df = spark.read.format("csv") \
@@ -65,10 +69,22 @@
 
 
 
-
-
-
 - Ingesting a JSON File
+
+    - With the popularity of REST, JSON has become an extremely popular data exchange 
+        format.  It is easier to read, less verbose, and has fewer constraints than XML.
+
+
+    - There is a subformat of JSON called 'JSON Lines'.  JSON Lines stores a record on
+        one line, which makes for easy parsing and readability.
+
+
+    - Loading this format is very simple:
+
+        df = spark.read.format("json") \
+                  .load(JSON_FILE_PATH)
+
+
 
 - Ingesting a Multiline JSON File
 
