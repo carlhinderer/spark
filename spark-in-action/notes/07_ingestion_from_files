@@ -94,8 +94,11 @@
 
 - Ingesting a Multiline JSON File
 
-    - 
+    - As of v2.2, Spark can also ingest multiline JSON files.
 
+        df = spark.read.format("json") \
+                  .option("multiline", True) \
+                  .load(JSON_FILE_PATH)
 
 
 
@@ -118,7 +121,3 @@
 - Ingesting ORC
 
 - Ingesting Parquet
-
-
-
-
