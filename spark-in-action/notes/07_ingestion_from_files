@@ -30,3 +30,68 @@
                   .option("dateFormat", "MM/dd/yyyy") \    # Data matches MM/dd/yyyy format
                   .option("inferSchema", True) \
                   .load(CSV_FILE_PATH)
+
+
+    - Note that even though Spark is inferring the schema, we still need to give it a hint
+        about the date format so that the dates get parsed correctly.
+
+
+
+- Ingesting a CSV with a Known Schema
+
+    - We can infer the schema, but if we know the schema ahead of time, it can be useful
+        to specify the datatypes by telling Spark what schema to use.
+
+
+    - Here we create the schema:
+
+        schema = StructType([StructField('id', IntegerType(), False),
+                     StructField('authorId', IntegerType(), True),
+                     StructField('bookTitle', IntegerType(), False),
+                     StructField('releaseDate', DateType(), True),
+                     StructField('url', StringType(), False)])
+
+
+    - Then we can use the schema when loading the csv:
+
+        df = spark.read.format("csv") \
+                  .option("header", True) \
+                  .option("multiline", True) \
+                  .option("sep", ";") \
+                  .option("dateFormat", "MM/dd/yyyy") \
+                  .option("quote", "*") \
+                  .schema(schema) \
+                  .load(absolute_file_path)
+
+
+
+
+
+
+- Ingesting a JSON File
+
+- Ingesting a Multiline JSON File
+
+- Ingesting an XML File
+
+- Ingesting a Text File
+
+- The Problem with Traditional File Formats
+
+- Avro
+
+- ORC
+
+- Parquet
+
+- Comparing Avro, ORC, and Parquet
+
+- Ingesting Avro
+
+- Ingesting ORC
+
+- Ingesting Parquet
+
+
+
+
