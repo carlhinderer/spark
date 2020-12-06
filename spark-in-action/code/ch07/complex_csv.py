@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 import os
 
 PARENT_DIR = '/home/carl/Code/Hadoop/spark/spark-in-action/code'
-BOOKS_PATH = "ch07/data/books.csv"
+BOOKS_PATH = 'ch07/data/books.csv'
 CSV_FILE_PATH = os.path.join(PARENT_DIR, BOOKS_PATH)
 
 

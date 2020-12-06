@@ -101,8 +101,68 @@
                   .load(JSON_FILE_PATH)
 
 
+    - Note that if you accidentally forget the 'multiline' option, you'll get a DataFrame
+        with a single column '_corrupt_record'.
+
+        +--------------------+
+        |     _corrupt_record|
+        +--------------------+
+        |                 [ {|
+        |       "tag" : "A1",|
+        |  "geopoliticalar...|
+        +--------------------+
+
+
 
 - Ingesting an XML File
+
+    - Years ago, it seemed like XML might become the lingua france of data exchange.  It
+        turned out to be more verbose and harder to read than JSON, but it is still widely
+        used.  XML is:
+
+        - structured
+        - extensible
+        - self-describing
+        - embeds schema rules via DTD and XSD
+        - a W3 standard
+
+
+    - In the XML we are using for this example, we have a sequence of rows enclosed in a
+        root element:
+
+        <response>
+            <row
+              _id="1"
+              _uuid="BAC69188-84A6-4D28-951E-FC687ACB6D4A"
+              _position="1"
+              _address="https://data.nasa.gov/resource/nasa-patents/1">
+                 <center>NASA Ames Research Center</center>
+                 <status>Issued</status>
+                 <case_number>ARC-14048-1</case_number>
+                 <patent_number>5694939</patent_number>
+                 <application_sn>08/543,093</application_sn>
+                 <title>Autogenic-Feedback Training Exercise Method &amp; System</title>
+                 <patent_expiration_date>2015-10-03T00:00:00</patent_expiration_date>
+            </row>
+            ...
+        </response>
+
+
+    - Since Spark doesn't read XML out of the box, we'll need to use the DataBricks XML package
+        to read it.  Here is the loading of the DataFrame:
+
+        df = spark.read.format("xml") \
+                .option("rowTag", "row") \
+                .load(XML_FILE_PATH)
+
+
+    - And here we run it, including the DataBricks package:
+
+        spark-submit --master local[*] \
+                     --packages com.databricks:spark-xml_2.11:0.6.0 \
+                     xml_ingestion.py
+
+
 
 - Ingesting a Text File
 

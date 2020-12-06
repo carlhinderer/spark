@@ -3,7 +3,7 @@ from pyspark.sql.functions import col
 import os
 
 PARENT_DIR = '/home/carl/Code/Hadoop/spark/spark-in-action/code'
-FORCLOSURE_PATH = "ch07/data/durham-nc-foreclosure-2006-2016.json"
+FORCLOSURE_PATH = 'ch07/data/durham-nc-foreclosure-2006-2016.json'
 JSON_FILE_PATH = os.path.join(PARENT_DIR, FORCLOSURE_PATH)
 
 
