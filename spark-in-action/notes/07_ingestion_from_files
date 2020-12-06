@@ -265,7 +265,7 @@
                   .load(AVRO_FILE_PATH)
 
 
-    - The Avro format is not directly supported by Spark, so we have to add the external
+    - The Avro format is not supported by Spark by default, so we have to add the external
         package:
 
         $ spark-submit --master local[*] \
@@ -276,4 +276,25 @@
 
 - Ingesting ORC
 
+    - To read from an ORC file, we pass the ORC implementation as a config parameter to the
+        SparkSession:
+
+        spark = SparkSession.builder.appName("ORC to Dataframe") \
+                            .config("spark.sql.orc.impl", "native") \
+                            .getOrCreate()
+                            
+
+    - Then we can read the ORC file:
+
+        df = spark.read.format("orc") \
+                  .load(ORC_FILE_PATH)
+
+
+
 - Ingesting Parquet
+
+    - Spark easily ingests Parquet files natively, since it is the default format used by
+        Spark.  
+
+        df = spark.read.format("parquet") \
+                  .load(absolute_file_path)
