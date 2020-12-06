@@ -17,9 +17,9 @@ spark = SparkSession.builder.appName("Complex CSV with a Schema").getOrCreate()
 # Creates the schema
 schema = StructType([StructField('id', IntegerType(), False),
                      StructField('authorId', IntegerType(), True),
-                     StructField('bookTitle', IntegerType(), False),
+                     StructField('title', StringType(), False),
                      StructField('releaseDate', DateType(), True),
-                     StructField('url', StringType(), False)])
+                     StructField('link', StringType(), False)])
 
 
 # Reads a CSV file with header, called books.csv, stores it in a dataframe
@@ -30,7 +30,7 @@ df = spark.read.format("csv") \
     .option("dateFormat", "MM/dd/yyyy") \
     .option("quote", "*") \
     .schema(schema) \
-    .load(absolute_file_path)
+    .load(CSV_FILE_PATH)
 
 
 # Shows at most 30 rows from the dataframe
