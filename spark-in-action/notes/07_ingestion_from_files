@@ -259,6 +259,21 @@
 
 - Ingesting Avro
 
+    - To read the Avro file:
+
+        df = spark.read.format("avro") \
+                  .load(AVRO_FILE_PATH)
+
+
+    - The Avro format is not directly supported by Spark, so we have to add the external
+        package:
+
+        $ spark-submit --master local[*] \
+                       --packages org.apache.spark:spark-avro_2.11:2.4.0 \
+                       avro_ingestion.py
+
+
+
 - Ingesting ORC
 
 - Ingesting Parquet
