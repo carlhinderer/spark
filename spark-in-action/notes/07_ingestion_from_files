@@ -1,0 +1,32 @@
+-----------------------------------------------------------------------
+|  CHAPTER 7 - INGESTION FROM FILES                                   |
+-----------------------------------------------------------------------
+
+- Common Behavior of Parsers
+
+    - We can use regexes in the file paths.  For instance, if we use 'a*' in the path,
+        all files starting with 'a' will be ingested.
+
+    - Options are not case-sensitive.  So 'multiline' and 'multiLine' are the same thing.
+
+
+
+- Complex Ingestion From CSV
+
+    - CSV has been around forever, and it has many variations:
+
+        - the separators are not always commas
+        - some records span multiple lines
+        - there are various ways of escaping the separator
+
+
+    - Here is the csv load we are using for this exercise:
+
+        df = spark.read.format("csv") \
+                  .option("header", "true") \
+                  .option("multiline", True) \             # Some records split over multiple lines
+                  .option("sep", ";") \                    # Separator is ;
+                  .option("quote", "*") \                  # Escape character is *
+                  .option("dateFormat", "MM/dd/yyyy") \    # Data matches MM/dd/yyyy format
+                  .option("inferSchema", True) \
+                  .load(CSV_FILE_PATH)
