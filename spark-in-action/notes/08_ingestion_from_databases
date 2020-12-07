@@ -1,0 +1,94 @@
+-----------------------------------------------------------------------
+|  CHAPTER 8 - INGESTION FROM DATABASES                               |
+-----------------------------------------------------------------------
+
+- Adding the Database Drivers
+
+    - In this chapter, we'll see examples of connecting to:
+
+        - MySQL (a SQL database)
+        - Informix (requires a custom dialect)
+        - ElasticSearch (a NoSQL database)
+
+
+    - Here is an example of a 'pom.xml' file that includes the drivers for connecting to these
+        platforms:
+
+
+        pom.xml
+        ----------------------------------------------------------
+        ...
+        <properties>
+            ...
+            <mysql.version>8.0.8-dmr</mysql.version>
+            <informix-jdbc.version>4.10.8.1</informix-jdbc.version>
+            <elasticsearch-hadoop.version>6.2.1</elasticsearch-hadoop.version>
+        </properties>
+        <dependencies>
+            ...
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${mysql.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ibm.informix</groupId>
+                <artifactId>jdbc</artifactId>
+                <version>${informix-jdbc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.elasticsearch</groupId>
+                <artifactId>elasticsearch-hadoop</artifactId>
+                <version>${elasticsearch-hadoop.version}</version> 
+            </dependency>
+
+
+
+- Ingestion from Relational Databases
+
+    - Database Connections
+
+        - Spark connects directly to relational databases using JDBC drivers.  They 
+            require the following:
+
+            - The JDBC driver in the classpath of the workers
+            - The connection URL
+            - The username
+            - The password
+
+
+    - Understanding the Example Data
+
+        - We'll use the 'Sakila' sample database that comes with MySQL.  It represents a
+            DVD rental store.  It has about 15 tables and some views.
+
+
+        - We'll use the 'actor' table for this project.
+
+            actor
+            ---------------------------------------------
+            actor_id       SMALLINT        (Primary Key)
+            first_name     VARCHAR(45)
+            last_name      VARCHAR(45)
+            last_update    TIMESTAMP
+
+
+    - Connection Method #1 - Use variables for database options
+
+        # Database connection settings
+        user = "root"
+        password = "Spark<3Java"
+        use_ssl="false"
+        mysql_url = "jdbc:mysql://localhost:3306/sakila?serverTimezone=EST"
+        dbtable = "actor"
+        database="sakila"
+        
+        
+        # Ingest the actor table from the database
+        df = spark.read.format("jdbc") \
+                .options(url=mysql_url,
+                         database=database,
+                         dbtable=dbtable,
+                         user=user,
+                         password=password) \
+                .load()
