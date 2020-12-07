@@ -282,4 +282,27 @@
         """
         
         df = df.select(sqlQuery)
+
+
+
+- Performing Ingesting and Partitioning
+
+    - We can also ingest from a database and automatically assign to the partitions.
+
+        # Partition settings
+        partition_column = "film_id"
+        lower_bound = 1
+        upper_bound = 1000
+        num_partitions = 10
         
+        # Read from the film table
+        df = spark.read.format("jdbc") \
+            .option("url", mysql_url) \
+            .option("user", user) \
+            .option("dbtable", dbtable) \
+            .option("password", password) \
+            .option("partitionColumn", partition_column) \
+            .option("lowerBound", lower_bound) \
+            .option("upperBound", upper_bound) \
+            .option("numPartitions", num_partitions) \
+            .load()
