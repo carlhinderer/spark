@@ -122,3 +122,78 @@
                   .option("useSSL", "false") \
                   .option("serverTimezone", "EST") \
                   .load()
+
+
+
+- The Role of the Dialect
+
+    - A 'dialect' is a translation block between Spark and the database.  It's typically a
+        small component, implemented in a single class.  The dialect defines Spark's behavior
+        when communicating with the database. 
+
+
+    - For example, Postgres and Informix have a 'SERIAL' type, which holds an auto-incrementing
+        integer used for primary keys.  Spark needs to be told that this type is an integer
+        when it hits Tungsten storage.
+
+      Tungsten Storage is the storage manager that optimizes memory usage for objects, bypassing
+        the JVM's storage mechanism for more efficiency.
+
+
+    - Spark comes with a few database dialects as part of the standard distribution.  As of
+        Spark v3.0.0, they include:
+
+        - IBM DB2
+        - Apache Derby
+        - MySQL
+        - Microsoft SQL Server
+        - Oracle
+        - PostgreSQL
+        - Teradata Database
+
+
+
+- Building your own Dialect
+
+    - We will create an Informix dialect, since there is no officially supported one.
+        It is one class, 'InformixJdbcDialect' , that extends the 'JdbcDialect' class.
+
+
+    - Note that Spark is written in Scala, so we'll need to return Scala types.
+
+
+    - Catalyst is the optimization engine built in Spark.  The 'getCatalystType()' method
+        receives 4 arguments:
+
+        1. The SQL type as an integer, as defined in 'java.sql.Types'
+        2. The type name as a string
+        3. The size for numeric, string, and binary types
+        4. A metadata builder
+
+
+    - The 'getCatalystType()' method return type is one of the following:
+
+        1. A datatype:
+
+            BinaryType
+            BooleanType
+            Byte-Type
+            CalendarIntervalType
+            DateType
+            DoubleType
+            FloatType
+            IntegerType
+            LongType
+            NullType
+            ShortType
+            StringType
+            TimestampType
+
+        2. A subtype of 'org.apache.spark.sql.types.DataType':
+
+            ArrayType
+            HiveStringType
+            MapType
+            NullType
+            NumericTypeObjectType
+            StructType
