@@ -287,7 +287,10 @@
 
 - Performing Ingesting and Partitioning
 
-    - We can also ingest from a database and automatically assign to the partitions.
+    - We can also ingest from a database and automatically assign to the partitions.  By default,
+        we will load all the data from the table into a single partition.  However, we can 
+        immediately split the data into partitions if we need to.
+
 
         # Partition settings
         partition_column = "film_id"
@@ -306,3 +309,32 @@
             .option("upperBound", upper_bound) \
             .option("numPartitions", num_partitions) \
             .load()
+
+
+
+- Ingestion from Elasticsearch
+
+    - Elasticsearch is a scalable document store and search engine.  A bidirectional
+        communication Elasticsearch helps Spark store and retrieve complex documents.
+
+
+    - We'll need to add the Elasticsearch driver to the 'pom.xml' file.
+
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch-hadoop</artifactId>
+            <version>6.2.1</version>
+        </dependency>
+
+
+    - Elasticsearch stores documents in JSON format.
+
+
+    - Here, we ingest from Elasticsearch:
+
+        df = spark.read.format("org.elasticsearch.spark.sql") \
+                  .option("es.nodes", "localhost") \
+                  .option("es.port", "9200") \
+                  .option("es.query", "?q=*") \
+                  .option("es.read.field.as.array.include", "Inspection_Date") \
+                  .load("nyc_restaurants")
