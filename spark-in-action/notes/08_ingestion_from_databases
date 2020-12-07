@@ -83,7 +83,6 @@
         dbtable = "actor"
         database="sakila"
         
-        
         # Ingest the actor table from the database
         df = spark.read.format("jdbc") \
                 .options(url=mysql_url,
@@ -92,3 +91,22 @@
                          user=user,
                          password=password) \
                 .load()
+
+
+    - Connection Method #2 - Using the Long MySQL URL
+
+        # Database settings
+        mysql_long_url = """
+                jdbc:mysql://localhost:3306/sakila?user=root
+                &password=Spark<3Java
+                &useSSL=false
+                &serverTimezone=EST
+            """
+        
+        dbtable = "actor"
+        
+        # Ingest the actor table from the database
+        df = spark.read.format("jdbc") \
+            .options(url=mysql_long_url,
+                     dbtable=dbtable)  \
+            .load()
