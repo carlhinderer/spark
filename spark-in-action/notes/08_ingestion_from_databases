@@ -110,3 +110,15 @@
             .options(url=mysql_long_url,
                      dbtable=dbtable)  \
             .load()
+
+
+    - Connection Method #3 - Options Hard-coded in the DataFrame Read
+
+        df = spark.read.format("jdbc") \
+                  .option("url", "jdbc:mysql://localhost:3306/sakila") \
+                  .option("dbtable", "actor") \
+                  .option("user", "root") \
+                  .option("password", "Spark<3Java") \
+                  .option("useSSL", "false") \
+                  .option("serverTimezone", "EST") \
+                  .load()
