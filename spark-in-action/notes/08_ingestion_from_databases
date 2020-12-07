@@ -197,3 +197,25 @@
             NullType
             NumericTypeObjectType
             StructType
+
+
+
+- Using the Custom Dialect
+
+    - Now, we can use the custom dialect we created:
+
+        // Specific Informix dialect
+        JdbcDialect dialect = new InformixJdbcDialect();
+        JdbcDialects.registerDialect(dialect);
+
+        // Using properties
+        Dataset<Row> df = spark
+            .read()
+            .format("jdbc")
+            .option(
+                "url",
+                "jdbc:informix-sqli://[::1]:33378/stores_demo:IFXHOST=lo_informix1210;DELIMIDENT=Y")
+            .option("dbtable", "customer")
+            .option("user", "informix")
+            .option("password", "in4mix")
+            .load();
