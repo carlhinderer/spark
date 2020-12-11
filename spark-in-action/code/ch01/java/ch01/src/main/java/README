@@ -1,0 +1,51 @@
+
+- To run the Java app:
+
+    1. Create a new folder.
+
+         code/ch01/java
+             > ch01
+                 > src
+                     > main
+                         > csv_to_dataframe
+                             + CsvToDataframeApp.java
+                 + pom.xml
+
+
+
+    2. Add the 'pom.xml' from jgperrin's repo, and make these changes:
+
+        # Update the artifactId
+        <project>
+            <artifactId>ch01</artifactId>
+        </project>
+
+        # Update Spark version
+        <properties>
+            <spark.version>2.4.3</spark.version>
+        </properties>
+
+        # Update the main class in 'argument'
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.6.0</version>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <argument>-classpath</argument>
+                <classpath />
+                <argument>csv_to_dataframe.CsvToDataframeApp</argument>
+              </arguments>
+            </configuration>
+        </plugin>
+
+
+
+    3. Add the Java file from jgperrin's repo.  Update the file paths to the data files.
+
+
+
+    4. Run the Maven command to build and execute the code:
+
+        $ mvn clean install exec:exec
