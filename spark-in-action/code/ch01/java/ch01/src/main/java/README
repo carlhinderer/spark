@@ -7,8 +7,9 @@
              > ch01
                  > src
                      > main
-                         > csv_to_dataframe
-                             + CsvToDataframeApp.java
+                         > java
+                             > csv_to_dataframe
+                                 + CsvToDataframeApp.java
                  + pom.xml
 
 

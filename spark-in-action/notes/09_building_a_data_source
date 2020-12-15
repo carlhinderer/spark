@@ -1,0 +1,42 @@
+-----------------------------------------------------------------------
+|  CHAPTER 9 - BUILDING YOUR OWN DATA SOURCE                          |
+-----------------------------------------------------------------------
+
+- Building Your Own Data Source
+
+    - Let's say you are working with a company and you want to ingest some data sources:
+
+        1. An ERP's REST API
+        2. A CNC Router in a workshop
+        3. DICOM files (with medical metadata) from an X-ray machine
+
+      This might sound like a strange combination, but data scientists will find 
+        correlations in strange places.
+
+
+    - Now, you could build separate applications to pull this data and put it in CSV or JSON
+        files.  However, you'll have to maintain files.  You'll have to worry about retention
+        policies and access controls.
+
+
+    - Instead, you could just build Spark extensions that talk to each of the devices, and
+        then you wouldn't have to worry about any of these things.
+
+
+
+- EXIF
+
+    - When cameras take pictures and store them in flash memory, they typically store them 
+        as JPEGs.  The JPEGs can contain metadata in a format called 'EXIF' (Exchange Image
+        File Format).
+
+
+    - To read EXIF data, we'll use an open source library called 'Metadata Extractor'.  We'll
+        insert this library into our 'pom.xml'.
+
+
+
+- Data Sources
+
+
+- 
