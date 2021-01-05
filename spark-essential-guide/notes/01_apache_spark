@@ -2,16 +2,6 @@
 | CHAPTER 1 - APACHE SPARK                                                |
 ---------------------------------------------------------------------------
 
-- Apache Spark
-
-    - Spark is a unified computing engine and set of libraries for parallel data processing
-        on computer clusters.
-
-    - Spark supports the Python, Java, Scala, and R programming languages and includes 
-        libraries for diverse tasks ranging from SQL to streaming to machine learning.
-
-
-
 - Spark Components
 
       Structured Streaming
@@ -64,29 +54,6 @@
 
 
 
-- The Big Data Problem
-
-    - For most of their history, computers became faster every year through processor speed increases.
-        As a result, applications automatically became faster every year without code rewrites.
-        Unfortunately, this trend in hardware stopped around 2005 due to hard limits in heat
-        dissipation.  Hardware developers switched to adding more parallel CPU cores all running
-        at the same speed.  This meant that suddenly applications needed to be modified to add
-        parallelism in order to run faster.
-
-    - Also, the technologies for storing down and collecting data did not slow down.  The cost to
-        store 1 TB of data continues to half every 14 months.  Moreover, the technologies for
-        collecting data (sensors, cameras, public datasets, etc.) continue to drop in cost and 
-        improve in resolution.
-
-    - The end result is a world in which collecting data is extremely cheap - most organizations
-        now consider it negligent not to collect data that may possibly advance the business.  
-        However processing it requires large, parallel computations on clusters of machines.
-        Moreover, in this new world, software developed during the last 50 years cannot
-        automatically scale up, and neither can traditional programming models for data processing
-        applications.  Creating new models is what Apache Spark was built for.
-
-
-
 - History of Spark
 
     - Started in UC Berkeley AMPlab in 2009 as a research project.  At the time Hadoop MapReduce was 
@@ -124,20 +91,20 @@
 
     - Launching the Python Console
 
-        # Launch pyspark on HDP machine
-        pyspark
+        # Launch pyspark console
+        $ pyspark
 
 
     - Launching the Scala Console
 
         # Launch scala console
-        spark-shell
+        $ spark-shell
 
 
     - Launching the SQL Console
 
         # Launch SQL console
-        spark-sql
+        $ spark-sql
 
 
 
