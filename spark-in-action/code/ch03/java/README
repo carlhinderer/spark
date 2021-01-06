@@ -1,8 +1,12 @@
 # Build the project
 $ mvn clean install
 
-# Run the IngestionSchemaManipulationApp
-$ mvn exec:java -Dexec.mainClass="lab200_ingestion_schema_manipulation.IngestionSchemaManipulationApp"
+
+# Run the IngestionSchemaManipulationApp (Uses custom 'mainClass' property)
+$ mvn exec:exec -DmainClass=lab200_ingestion_schema_manipulation.IngestionSchemaManipulationApp
 
 # Run the SchemaIntrospectionApp
-$ mvn exec:java -Dexec.mainClass="lab210_schema_introspection.SchemaIntrospectionApp"
+$ mvn exec:exec -DmainClass=lab210_schema_introspection.SchemaIntrospectionApp
+
+# Run the JsonIngestionSchemaManipulationApp
+$ mvn exec:exec -DmainClass=lab220_json_ingestion_schema_manipulation.JsonIngestionSchemaManipulationApp
