@@ -17,3 +17,6 @@ $ mvn exec:exec -DmainClass=lab230_dataframe_union.DataframeUnionApp
 
 # Run the ArrayToDatasetApp
 $ mvn exec:exec -DmainClass=lab300_dataset.ArrayToDatasetApp
+
+# Run the ArrayToDatasetToDataframeApp
+$ mvn exec:exec -DmainClass=lab310_dataset_to_dataframe.ArrayToDatasetToDataframeApp
