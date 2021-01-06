@@ -2,4 +2,7 @@
 $ mvn clean install
 
 # Run the IngestionSchemaManipulationApp
-$ mvn exec:java -Dexec.mainClass="ingestion_schema_manipulation.IngestionSchemaManipulationApp"
+$ mvn exec:java -Dexec.mainClass="lab200_ingestion_schema_manipulation.IngestionSchemaManipulationApp"
+
+# Run the SchemaIntrospectionApp
+$ mvn exec:java -Dexec.mainClass="lab210_schema_introspection.SchemaIntrospectionApp"
