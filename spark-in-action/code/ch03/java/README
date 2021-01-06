@@ -10,3 +10,6 @@ $ mvn exec:exec -DmainClass=lab210_schema_introspection.SchemaIntrospectionApp
 
 # Run the JsonIngestionSchemaManipulationApp
 $ mvn exec:exec -DmainClass=lab220_json_ingestion_schema_manipulation.JsonIngestionSchemaManipulationApp
+
+# Run the DataFrameUnionApp
+$ mvn exec:exec -DmainClass=lab230_dataframe_union.DataframeUnionApp
