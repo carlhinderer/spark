@@ -13,3 +13,7 @@ $ mvn exec:exec -DmainClass=lab220_json_ingestion_schema_manipulation.JsonIngest
 
 # Run the DataFrameUnionApp
 $ mvn exec:exec -DmainClass=lab230_dataframe_union.DataframeUnionApp
+
+
+# Run the ArrayToDatasetApp
+$ mvn exec:exec -DmainClass=lab300_dataset.ArrayToDatasetApp
