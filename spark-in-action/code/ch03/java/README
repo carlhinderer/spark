@@ -1,0 +1,5 @@
+# Build the project
+$ mvn clean install
+
+# Run the IngestionSchemaManipulationApp
+$ mvn exec:java -Dexec.mainClass="ingestion_schema_manipulation.IngestionSchemaManipulationApp"
