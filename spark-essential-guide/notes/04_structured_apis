@@ -59,8 +59,7 @@
 
     - This addition operation happens because Spark will convert an expression written in an input 
         language to Spark’s internal Catalyst representation of that same type information. It then 
-        will operate on that internal representation. We touch on why this is the case momentarily, but
-        before we can, we need to discuss Datasets.
+        will operate on that internal representation. 
 
 
 

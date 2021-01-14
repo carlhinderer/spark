@@ -35,22 +35,14 @@
 
 
     - The Dataset class is parameterized with the type of object contained inside: Dataset<T> in Java 
-        and Dataset[T] in Scala. For example, a Dataset[Person] will be guaranteed to contain objects 
-        of class Person. As of Spark 2.0, the supported types are classes following the JavaBean 
-        pattern in Java and case classes in Scala. These types are restricted because Spark needs to be 
-        able to automatically analyze the type T and create an appropriate schema for the tabular data 
-        within your Dataset.
+        and Dataset[T] in Scala.  For example, a Dataset[Person] will be guaranteed to contain objects 
+        of class Person.  The supported types are classes following the JavaBean 
+        pattern in Java and case classes in Scala. 
 
 
-    - One great thing about Datasets is that you can use them only when you need or want to. For 
-        instance, in the following example, we’ll define our own data type and manipulate it via 
-        arbitrary map and filter functions. After we’ve performed our manipulations, Spark can 
-        automatically turn it back into a DataFrame, and we can manipulate it further by using the 
-        hundreds of functions that Spark includes. This makes it easy to drop down to lower level, 
-        perform type-safe coding when necessary, and move higher up to SQL for more rapid analysis.
-
-      Here is a small example showing how you can use both type-safe functions and DataFrame-like SQL
-        expressions to quickly write business logic:
+    - Here, we define our own data type and manipulate it via arbitrary map and filter functions. 
+        After we’ve performed our manipulations, Spark can automatically turn it back into a DataFrame, 
+        and we can manipulate it further by using Spark transformations. 
 
         // in Scala
         >>> case class Flight(DEST_COUNTRY_NAME: String,
@@ -84,23 +76,14 @@
         Spark 2.2. With Structured Streaming, you can take the same operations that you perform in 
         batch mode using Spark’s structured APIs and run them in a streaming fashion. 
 
-      This can reduce latency and allow for incremental processing. The best thing about Structured 
-        Streaming is that it allows you to rapidly and quickly extract value out of streaming systems 
-        with virtually no code changes. It also makes it easy to conceptualize because you can write 
-        your batch job as a way to prototype it and then you can convert it to a streaming job. The 
-        way all of this works is by incrementally processing that data.
+      The best thing about Structured Streaming is that it allows you to rapidly and quickly extract 
+        value out of streaming systems with virtually no code changes. It also makes it easy to 
+        conceptualize because you can write your batch job as a way to prototype it and then you can 
+        convert it to a streaming job.
 
 
-    - Let’s walk through a simple example of how easy it is to get started with Structured Streaming. 
-        For this, we will use a retail dataset, one that has specific dates and times for us to be able 
-        to use. We will use the “by-day” set of files, in which one file represents one day of data.
-
-      We put it in this format to simulate data being produced in a consistent and regular manner by 
-        a different process. This is retail data so imagine that these are being produced by retail 
-        stores and sent to a location where they will be read by our Structured Streaming job.
-
-
-    - The data looks like:
+    - For this example, we will use a retail dataset that has specific dates and times for us to be 
+        able to use.  The data looks like:
 
         InvoiceNo,StockCode,Description,Quantity,InvoiceDate,UnitPrice,CustomerID,Country
         536365,85123A,WHITE HANGING HEART T-LIGHT HOLDER,6,2010-12-01 08:26:00,2.55,17...
@@ -114,7 +97,7 @@
         >>> staticDataFrame = spark.read.format("csv")\
                                         .option("header", "true")\
                                         .option("inferSchema", "true")\
-                                        .load("/data/retail-data/by-day/*.csv")
+                                        .load("data/retail-data/by-day/*.csv")
 
         >>> staticDataFrame.createOrReplaceTempView("retail_data")
         >>> staticSchema = staticDataFrame.schema
@@ -249,12 +232,10 @@
 
 - Machine Learning and Advanced Analytics
 
-    - Another popular aspect of Spark is its ability to perform large-scale machine learning with a 
-        built-in library of machine learning algorithms called MLlib. MLlib allows for preprocessing,
-        munging, training of models, and making predictions at scale on data. You can even use models
-        trained in MLlib to make predictions in Strucutred Streaming. Spark provides a sophisticated 
-        machine learning API for performing a variety of machine learning tasks, from classification to
-        regression, and clustering to deep learning.
+    - Spark's built-in machine learning framework, MLlib, allows for preprocessing, munging, training 
+        of models, and making predictions at scale on data. You can even use models trained in MLlib to 
+        make predictions in Structured Streaming. We can perform a variety of machine learning tasks, 
+        from classification to regression, and clustering to deep learning.
 
       To demonstrate this functionality, we will perform some basic clustering on our data using a 
         standard algorithm called k-means.
@@ -458,10 +439,10 @@
         >>> take(sparkDF, 5)
         >>> collect(orderBy(sparkDF, "count"), 20)
 
+
     - R users can also use other R libraries like the pipe operator in magrittr to make Spark
         transformations a bit more R-like. This can make it easy to use with other libraries like 
         ggplot for more sophisticated plotting:
-
 
         >>> library(magrittr)
         >>> sparkDF %>%

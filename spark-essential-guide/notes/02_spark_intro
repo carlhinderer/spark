@@ -82,7 +82,7 @@
         #   This is a distributed collection.  When run on a cluster, each part of this range of
         #   number exists on a different executor.
         >>> myRange = spark.range(1000).toDF("number")
-a
+
 
 
 - DataFrames
@@ -202,7 +202,7 @@ a
     - We're using a csv file of flight data.
 
         # Look at csv data
-        >>> head /data/flight-data/csv/2015-summary.csv
+        $ head /data/flight-data/csv/2015-summary.csv
 
 
     - Spark includes the ability to read and write from a large number of data sources.
