@@ -1,0 +1,183 @@
+-----------------------------------------------------------------------------
+| CHAPTER 1 - INTRO TO SPARK                                                |
+-----------------------------------------------------------------------------
+
+- The Genesis of Spark
+
+    - Google's need for massive scale led to the creation of:
+
+        - GFS (fault-tolerant, distributed filesystem)
+        - Bigtable (scalable storage of structured data across GFS)
+        - MapReduce (parallel processing over GFS and BigTable, based of functional programming)
+
+
+    - MapReduce applications send computation code (map and reduce functions) to where the data resides,
+        favoring data locality and cluster rack affinity rather than bringing data to code.  
+
+      The workers in the cluster aggregate and reduce the intermediate computations and produce a final
+        output from the 'reduce' function, which is written to distributed storage and is available to
+        your application.  This keeps most I/O on disk, and significantly reduces network traffic.
+
+
+    - The ideas in Google's GFS paper were implemented in HDFS, and the MapReduce paper's were implemented
+        in Hadoop MapReduce.  Hadoop became part of the ASF in 2006.
+
+      Hadoop had widespread adoption, but it was hard to manage and administer.  The MapReduce API was
+        verbose.  Also, intermediate computations were written to disk, which was slow.
+
+
+    - Since Hadoop MR lacked versatility, a lot of bespoke systems were built on top of it.  These 
+        included Hive, Storm, Impala, Giraph, Drill, etc.  This made the learning curve even steeper for
+        developers.
+
+
+    - Researchers at UC Berkeley started working on Spark in 2009, with the goal of making processing
+        simpler, faster, and easier.  It is now many order of magnitude faster.  Apache Spark 1.0 was
+        released in 2014.
+
+
+
+- What is Apache Spark?
+
+    - Spark is a unified engine for large-scale distributed data processing, on premises or in the cloud.
+
+
+    - Spark is fast:
+
+        1. It takes advantage of cheaper, faster commodity hardware.  It stores intermediate results in
+             memory.
+
+        2. It builds query computations as a DAG.  It's DAG scheduler and query optimizer construct an
+             efficient compuational graph that can be decomposed into tasks that run in parallel across
+             the cluster.
+
+        3. It's physical execution engine, Tungsten, uses whole-stage code generation to generate compact
+             code for execution.
+
+
+    - Spark is easy to use:
+
+        - Fundamental abstraction RDDs allows higher-level abstractions to be built on top.
+
+
+    - Spark is modular:
+
+        - Scala, Java, Python, R, and SQL are all supported.
+
+        - Core components are Spark SQL, Structured Streaming, MLlib, and GraphX.
+
+
+    - Spark is extensible:
+
+        - Spark focuses on its fast, parallel computation engine rather than storage.  This is unlike 
+            Apache Hadoop, which coupled storage and compute.
+
+        - Spark can read data stored in many different sources (Hadoop, Cassandra, HBase, MongoDB, Hive,
+            RDBMS's, etc.) and process it all in memory.
+
+        - Spark's 'DataFrameReader' and 'DataFrameWriter' can also be extended to read data from other
+            sources, like Kafka, Kinesis, and S3.
+
+
+
+- Unified Analytics
+
+    - Spark SQL
+
+        - This module works well with structured data.  You can read data stored in an RDBMS table, or
+            from file formats with structured data (ie CSV, text, JSON, Avro, ORC, Parquet), and then
+            construct permanent or temporary tables in Spark.
+
+        - When using Structured APIs (Java, Python, Scala, R), you can use SQL-like queries to query the
+            data just read into a Spark DataFrame.
+
+
+        - Scala example:
+
+            // Read json file from S3 bucket into a Spark DataFrame
+            spark.read.json("s3://apache_spark/data/committers.json")
+              .createOrReplaceTempView("committers")
+
+            // Issue a SQL query and return result as a Spark DF
+            val results = spark.sql("""SELECT name, org, module, release, num_commits
+                FROM committers WHERE module = 'mllib' AND num_commits > 10
+                ORDER BY num_commits DESC""")
+
+
+    - MLlib
+
+        - MLlib is a library containing common machine learning algorithms built atop high-level DF APIs.
+            The 'spark.mllib' library contained RDD-based code which is now in maintenance mode.  The
+            new 'spark.ml' library is used for new applications.
+
+
+        - Python example:
+
+            # In Python
+            from pyspark.ml.classification import LogisticRegression
+
+            training = spark.read.csv("s3://...")
+            test = spark.read.csv("s3://...")
+
+            # Load training data
+            lr = LogisticRegression(maxIter=10, regParam=0.3, elasticNetParam=0.8)
+
+            # Fit the model
+            lrModel = lr.fit(training)
+
+            # Predict
+            lrModel.transform(test)
+
+
+    - Structured Streaming
+
+        - Big data developers must be able to combine and react in real time to both static and streaming
+            data from engines like Kafka.  The Structured Streaming model views a stream as a continuously
+            growing table, with new rows appended at the end.  Developers can query it like a static
+            table.
+
+
+        - Spark 3.0 extended the range of streaming sources to include Kafka, Kinesis, and HDFS-based or
+            cloud storage.
+
+
+        - Python example:
+
+            # Read a stream from a local host
+            from pyspark.sql.functions import explode, split
+
+            lines = (spark
+              .readStream
+              .format("socket")
+              .option("host", "localhost")
+              .option("port", 9999)
+              .load())
+
+            # Perform transformation
+            # Split the lines into words
+            words = lines.select(explode(split(lines.value, " ")).alias("word"))
+
+            # Generate running word count
+            word_counts = words.groupBy("word").count()
+
+            # Write out to the stream to Kafka
+            query = (word_counts
+              .writeStream
+              .format("kafka")
+              .option("topic", "output"))
+
+
+    - GraphX
+
+        - GraphX is a library for manipulating graphs and performing graph-parallel computations.  It
+            offers standard algorithms like PageRank, Connected Components, and Triangle Counting.
+
+
+        - Scala example:
+
+            val graph = Graph(vertices, edges)
+            messages = spark.textFile("hdfs://...")
+
+            val graph2 = graph.joinVertices(messages) {
+              (id, vertex, msg) => ...
+            }

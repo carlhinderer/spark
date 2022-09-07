@@ -202,7 +202,7 @@
     - We're using a csv file of flight data.
 
         # Look at csv data
-        $ head /data/flight-data/csv/2015-summary.csv
+        $ head data/flight-data/csv/2015-summary.csv
 
 
     - Spark includes the ability to read and write from a large number of data sources.
