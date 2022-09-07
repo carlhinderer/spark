@@ -181,3 +181,146 @@
             val graph2 = graph.joinVertices(messages) {
               (id, vertex, msg) => ...
             }
+
+
+
+- Spark's Distributed Execution
+
+    - High-Level Overview
+
+
+                               /--------------------------------
+                              /                                | 
+             Spark Application                            /  Spark Executor
+             Spark Driver       <----> Cluster Manager   
+             SparkSession                                 \  Spark Executor
+                             \                                 |
+                              \---------------------------------
+
+
+    - Spark Driver
+
+        - The 'Spark Driver' is the part of a Spark application responsible for instantiating a 
+            SparkSession.  It:
+
+            1. Communicates with the Cluster Manager
+
+            2. Requests resources (CPU, memory, etc.) from the Cluster Manager for Spark's Executors (JVMs) 
+
+            3. Transforms all Spark operations into DAG computations, schedules them, and distributes 
+                 their execution as tasks across the Spark executors.  Once the resources are allocated,
+                 it communicates directly with the executors.
+
+
+    - SparkSession
+
+        - The 'SparkSession' is a unified conduit to all Spark operations and data.  Through this one
+            construct, you can:
+
+            - Create JVM runtime parameters
+            - Define DataFrames and DataSets
+            - Read from data sources
+            - Access catalog metadata
+            - Issue Spark SQL queries
+
+
+        - In a standalone application, you can create a SparkSession using the APIs.  In the shell, the
+            SparkSession is created for you automatically (access it with 'spark' or 'sc').
+
+
+    - Cluster Manager
+
+        - The 'Cluster Manager' is responsible for managing and allocating resources for the cluster of
+            nodes on which your application runs.
+
+
+        - Spark supports 4 cluster managers:
+
+            - Spark standalone cluster manager
+            - Hadoop YARN
+            - Apache Mesos
+            - Kubernetes
+
+
+    - Spark Executor
+
+        - A 'Spark Executor' runs on each worker node in the cluster.  The executors communicate with the
+            driver program, and are responsible for executing tasks on the workers.
+
+
+        - In most deployments, only a single executor runs per node.
+
+
+    - Deployment Modes
+
+        - Spark can run in different configurations and environments.  The cluster manager is agnostic to
+            where it runs, as long as executors can fulfill resource requests.
+
+
+        - Deployment modes:
+
+            1. Local
+                 - Driver and executor both run on a single host JVM
+                 - Cluster manager runs on same host
+
+            2. Standalone
+                 - Driver can run on any node in cluster
+                 - Each node in the cluster launches it's own executor JVM
+                 - Cluster manager allocated to any node in the cluster arbitrarily
+
+            3. YARN (Client)
+                 - Driver runs on a client, not part of the cluster
+                 - Executor is YARN's NodeManager container
+                 - YARN's Resource Manager and ApplicationManager allocate NodeManagers for executors
+
+            4. YARN (Cluster)
+                 - Driver runs with the YARN Application Master
+                 - Executor is YARN's NodeManager container
+                 - YARN's Resource Manager and ApplicationManager allocate NodeManagers for executors
+
+            5. Kubernetes
+                 - Driver runs in a K8s pod
+                 - Each executor runs it's own pod
+                 - Kubernetes manager is the cluster manager
+
+
+    - Distributed Data and Partitions
+
+        - Actual physical data is distributed across storage as partitions residing in either HDFS or
+            cloud storage.
+
+
+        - While the data is distributed as partitions across the physical cluster, Spark treats each 
+            partition as a high-level logical data abstraction — as a DataFrame in memory. 
+
+
+        - Though this is not always possible, each Spark executor is preferably allocated a task that 
+            requires it to read the partition closest to it in the network, observing data locality.
+
+
+        - Partitioning allows for efficient parallelism.  Here, we break up the physical data stored
+            across clusters into 8 partitions, and each executor will get one or more partitions to read
+            into it's memory.
+
+            # Break up physical data into partitions
+            log_df = spark.read.text("path_to_large_text_file").repartition(8)
+            print(log_df.rdd.getNumPartitions())
+
+
+        - Here, we create a DataFrame of 10,000 integers distributed over 8 partitions in memory.
+
+            # Create DataFrame distribued over partitions in memory
+            df = spark.range(0, 10000, 1, 8)
+            print(df.rdd.getNumPartitions())
+
+
+
+- The Developer Experience
+
+    - Popular Spark Use Cases
+
+        - Processing in parallel large data sets distributed across a cluster
+        - Performing ad hoc or interactive queries to explore and visualize data sets
+        - Building, training, and evaluating ML models using MLlib
+        - Implementing end-to-end data pipelines from myriad streams of data
+        - Analyzing graph data sets and social networks
