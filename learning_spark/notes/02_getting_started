@@ -1,0 +1,125 @@
+-----------------------------------------------------------------------------
+| CHAPTER 2 - GETTING STARTED                                               |
+-----------------------------------------------------------------------------
+
+- Spark's Directories and Files
+
+    - A few important directories in /opt/spark, where Spark is installed:
+
+        bin/          # Contains scripts we use to interact with Spark, like shells and drivers
+
+        sbin/         # Contains administrative scripts
+
+        kubernetes/   # Contains Dockerfiles for creating images to run Spark on k8s
+
+        data/         # Has .txt files which serve as input for MLlib, Structured Streaming, and GraphX
+
+        examples/     # Has examples in all 4 languages
+
+
+
+- Using the Scala and PySpark Shells
+
+    - To start the PySpark shell:
+
+        $ pyspark
+
+
+    - To start the Scala shell:
+
+        $ spark-shell
+
+
+    - To read a text file and count the number of lines in the PySpark shell:
+
+        >>> strings = spark.read.text("../README.md")
+
+        >>> strings.show(10, truncate=False)
+
+        >>> strings.count()
+
+
+
+- Spark Application Concepts
+
+    - Terms
+
+        - An 'application' is a user program built on Spark using it's APIs.  It consists of a driver
+            program and executors on the cluster.
+
+        - A 'SparkSession' is a object that provides a point of entry to interact with Spark functionality.
+
+        - A 'job' is a parallel computation consisting of multiple tasks that gets spawned in response
+            to a Spark action (ie 'save()' or 'collect()').
+
+        - Each job gets divided into smaller sets of tasks called 'stages' that depend on each other.
+
+        - A 'task' is a single unit of work that gets sent to a Spark executor.  Each task maps to a 
+            single core and works on a single partition of data, so an executor with 16 cores can have
+            16 tasks working on 16 partitions in parallel.
+
+
+
+- Transformations, Actions, and Lazy Evaluation
+
+    - Spark operations on distributed data can be classified into 2 types:
+
+        1. Transformations
+
+             - Transform a DF into a new DF without altering the original data
+             - This immutability provides fault tolerance, since lineage can be replayed
+             - ie orderBy(), groupBy(), select(), filter(), join()
+             - Executed lazily, can be optimized into stages for more efficient execution
+
+
+        2. Actions
+
+             - Triggers the lazy evaluation of all recorded transformations
+             - ie show(), take(), count(), collect(), save()
+
+
+    - Example:
+
+        >>> strings = spark.read.text("../README.md")
+        >>> filtered = strings.filter(strings.value.contains("Spark"))
+        >>> filtered.count()                                               # Triggers execution
+
+
+    - Transformations can be classified as having either 'narrow dependencies' or 'wide dependencies'.
+
+      A narrow transformation is a transformation where a single output partition can be computed from a
+        single input partition.  In the example, 'filter()' and 'contains()' are both narrow, because they
+        can operate on a single partition without any exchange of data.
+
+      A wide transformation requires data from other partitions to be read in, combined, and written to
+        disk.  The 'groupBy()' and 'orderBy()' transformations are examples.  Since each partition will
+        have it's own count of words that contain 'Spark', a 'groupBy()' will force a shuffle of data
+        from each partition across the cluster.
+
+
+
+- The Spark UI
+
+    - The driver launches a web UI, running on port 4040, where you can view metrics about:
+
+        - the scheduler stages and tasks
+        - summary of RDD sizes and memory usage
+        - information about the environment
+        - the running executors
+        - all the Spark SQL queries
+
+
+
+- Running Example Programs
+
+    - We can run the Java and Scala examples that were included in the Spark installation.  For instance,
+        we can run a program to read a text file, and give us each word and its count.  This is the
+        'Hello, World' of distributed computing.
+
+        $ ./bin/run-example JavaWordCount README.md
+
+
+
+- Example Application - Counting M&Ms
+
+    - 
