@@ -122,4 +122,16 @@
 
 - Example Application - Counting M&Ms
 
-    - 
+    - We'll create a Spark program that reads a file with over 100K lines, each of which has a 
+        <state, mnm_color, count>, and computes and aggregates the counts for each color and state.
+
+
+    - We have the program at 'ch02/mnm_count.py' and we'll run it on the 'mnm_dataset.csv' file.  
+
+      First, to avoid having all the 'INFO' messages printed to the console, we'll copy the 
+        'log4j.properties.template' file to 'log4j.properties', and set 'log4j.rootCategory=WARN' in it.
+
+
+    - Now, we can run our application:
+
+        $ $SPARK_HOME/bin/spark-submit mnm_count.py data/mnm_dataset.csv
