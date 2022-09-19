@@ -135,3 +135,6 @@
     - Now, we can run our application:
 
         $ $SPARK_HOME/bin/spark-submit mnm_count.py data/mnm_dataset.csv
+
+        # Since we added $SPARK_HOME/bin to path
+        $ spark-submit mnm_count.py data/mnm_dataset.csv

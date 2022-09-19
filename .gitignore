@@ -103,5 +103,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# Data for book
-spark-essential-guide/data/
+# Leave data sets out of github
+data/
