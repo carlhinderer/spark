@@ -105,3 +105,8 @@ venv.bak/
 
 # Leave data sets out of github
 data/
+databricks-datasets/
+
+# Spark-generated
+metastore_db/
+spark-warehouse/
