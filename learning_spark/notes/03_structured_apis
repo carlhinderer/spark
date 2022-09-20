@@ -1,0 +1,510 @@
+-----------------------------------------------------------------------------
+| CHAPTER 3 - STRUCTURED APIS                                               |
+-----------------------------------------------------------------------------
+
+- What's Underneath an RDD
+
+    - The 'RDD' is the most basic abstraction in Spark.  An RDD has 3 vital characteristics:
+
+        1. Dependencies
+        2. Partitions (with some locality information)
+        3. Compute function: Partition => Iterator[T]
+
+
+    - The list of 'dependencies' instructs Spark how an RDD is constructed with it's inputs.  When
+        necessary, an RDD can be recreated from these dependencies, which gives them resiliency.
+
+
+    - 'Partitions' provide Spark the ability to parallelize computation across executors.  In some cases
+        (ie reading from HDFS), Spark will use locality information to minimize network traffic.
+
+
+    - The 'compute function' produces an Iterator[T] for the data that will be stored in the RDD.
+
+
+    - This is very simple and elegant, but the downside is that Spark doesn't know what the compute
+        function does or what type it operates on.  This opacity means that Spark can't compress data or
+        optimize the query plan.  Structuring data into DataFrames and using a DSL were added in Spark 2.0
+        as the solution to this.
+
+
+
+- Structuring Spark
+
+    - For an example of using low-level RDDs, we'll take a list of names and ages, aggregate all the ages
+        for each name, then average the ages:
+
+        # Create an RDD of tuples (name, age)
+        dataRDD = sc.parallelize([("Brooke", 20), ("Denny", 31), ("Jules", 30), ("TD", 35), ("Brooke", 25)])
+
+        # Use map and reduceByKey transformations with their lambda
+        # expressions to aggregate and then compute average
+        agesRDD = (dataRDD
+          .map(lambda x: (x[0], (x[1], 1)))
+          .reduceByKey(lambda x, y: (x[0] + y[0], x[1] + y[1]))
+          .map(lambda x: (x[0], x[1][0]/x[1][1])))
+
+
+    - Here is the same set of operations in PySpark:
+
+        from pyspark.sql import SparkSession
+        from pyspark.sql.functions import avg
+
+        # Create a SparkSession
+        spark = (SparkSession
+          .builder
+          .appName("AuthorsAges")
+          .getOrCreate())
+
+        # Create a DataFrame
+        data_df = spark.createDataFrame([("Brooke", 20), ("Denny", 31), ("Jules", 30),
+          ("TD", 35), ("Brooke", 25)], ["name", "age"])
+
+        # Group the same names together, aggregate their ages, and compute an average
+        avg_df = data_df.groupBy("name").agg(avg("age"))
+
+        # Show the results of the final execution
+        avg_df.show()
+
+
+    - Note that we can always switch back to using low-level RDDs if we need to, but we hardly ever find
+        a good reason to do so.
+
+
+
+- The DataFrame API
+
+    - Spark DataFrames were inspired by pandas.  Spark DFs are distributed in-memory tables with named
+        columns and schemas, where each column has a specific data type.
+
+
+    - DFs are immutable, and Spark keeps a lineage of all transformations.  You can create new DFs, and
+        the previous versions are preserved.
+
+
+
+- Basic Python Data Types in Spark
+
+    Data type       Value assigned in Python          API to instantiate
+    ---------------------------------------------------------------------------
+    ByteType        int                               DataTypes.ByteType
+
+    ShortType       int                               DataTypes.ShortType
+    IntegerType     int                               DataTypes.IntegerType
+    LongType        int                               DataTypes.LongType
+
+    FloatType       float                             DataTypes.FloatType
+    DoubleType      float                             DataTypes.DoubleType
+
+    StringType      str                               DataTypes.StringType
+
+    BooleanType     bool                              DataTypes.BooleanType
+
+    DecimalType     decimal.Decimal                   DecimalType
+
+
+
+- Structured and Complex Data Types
+
+    Data type Value assigned in Python API to instantiate
+    ---------------------------------------------------------------------------
+    BinaryType      bytearray                         BinaryType()
+
+    TimestampType   datetime.datetime                 TimestampType()
+
+    DateType        datetime.date                     DateType()
+
+    ArrayType       List, tuple, or array             ArrayType(dataType, [nullable])
+
+    MapType         dict                              MapType(keyType, valueType, [nullable])
+
+    StructType      List or tuple                     StructType([fields])
+
+    StructField     A value type corresponding to     StructField(name, dataType, [nullable])
+                      the type of this field
+
+
+
+- Schemas and Creating DFs
+
+    - A 'schema' in Spark defines the column names and associated data types for a DF.  Most often,
+        schemas come into play when reading structured data from an external data source.
+
+
+    - Defining a schema up front (as opposed to a schema-on-read approach) has 3 benefits:
+
+        1. Spark doesn't have to infer the data types
+
+        2. Spark doesn't need to create a separate job to read a portion of your file to ascertain the
+             schema.
+
+        3. You can detect errors early if the data doesn't match the schema.
+
+
+    - So, it's generally a good idea to define a schema up front whenever you need to read a large file
+        from a data source.
+
+
+    - There are 2 ways to define a schema: programatically or using a DDL string.
+
+
+    - To define a schema programatically:
+
+        from pyspark.sql.types import *
+
+        schema = StructType([StructField("author", StringType(), False),
+          StructField("title", StringType(), False),
+          StructField("pages", IntegerType(), False)])
+
+
+    - To define a schema using DDL:
+
+        schema = "author STRING, title STRING, pages INT"
+
+
+    - An example of defining a schema is located at 'python/ch03/define_schema.py'.
+
+        $ spark-submit define_schema.py
+
+
+    - In this application, we define the schema, then use it when loading the DataFrame:
+
+        # Define schema for our data
+        schema = StructType([
+           StructField("Id", IntegerType(), False),
+           StructField("First", StringType(), False),
+           StructField("Last", StringType(), False),
+           StructField("Url", StringType(), False),
+           StructField("Published", StringType(), False),
+           StructField("Hits", IntegerType(), False),
+           StructField("Campaigns", ArrayType(StringType()), False)])
+
+        # Use schema when loading DF
+        blogs_df = spark.createDataFrame(data, schema)
+
+        # Same if reading from JSON file
+        blogs_df = spark.read.schema(schema).json(json_file))
+
+        # To use schema later
+        blogs_df.schema
+
+
+
+- Columns and Expressions
+
+    - Spark columns are similar to named columns in pandas or an RDBMS table.  Columns are objects with
+        public methods ('Column' type).
+
+
+    - You can use logical or mathematical expressions on columns:
+
+        from pyspark.sql.functions import col, expr
+
+        blogs_df.select(expr('Hits * 2')).show(2)
+        blogs_df.select(col('Hits') * 2)
+
+        expr("columnName * 5")
+        (expr("columnName - 5") > col(anothercolumnName))
+
+
+
+- Rows
+
+    - A row in Spark is a generic 'Row' object, containing one or more columns.
+
+        from pyspark.sql import Row
+
+        blog_row = Row(6, "Reynold", "Xin", "https://tinyurl.6", 255568, "3/2/2015", 
+          ["twitter", "LinkedIn"])
+
+        # Access using index for individual items
+        blog_row[1]
+
+
+    - Row objects can be used to create DFs if you need them for quick exploration.
+
+        rows = [Row("Matei Zaharia", "CA"), Row("Reynold Xin", "CA")]
+        authors_df = spark.createDataFrame(rows, ["Authors", "State"])
+        authors_df.show()
+
+
+
+- Using DataFrameReader and DataFrameWriter
+
+    - Here, we read a large CSV file containing data on fire department calls.
+
+        from pyspark.sql.types import *
+
+        fire_schema = StructType([StructField('CallNumber', IntegerType(), True),
+                            StructField('UnitID', StringType(), True),
+                            StructField('IncidentNumber', IntegerType(), True),
+                            StructField('CallType', StringType(), True),
+                            StructField('CallDate', StringType(), True),
+                            StructField('WatchDate', StringType(), True),
+                            StructField('CallFinalDisposition', StringType(), True),
+                            StructField('AvailableDtTm', StringType(), True),
+                            StructField('Address', StringType(), True),
+                            StructField('City', StringType(), True),
+                            StructField('Zipcode', IntegerType(), True),
+                            StructField('Battalion', StringType(), True),
+                            StructField('StationArea', StringType(), True),
+                            StructField('Box', StringType(), True),
+                            StructField('OriginalPriority', StringType(), True),
+                            StructField('Priority', StringType(), True),
+                            StructField('FinalPriority', IntegerType(), True),
+                            StructField('ALSUnit', BooleanType(), True),
+                            StructField('CallTypeGroup', StringType(), True),
+                            StructField('NumAlarms', IntegerType(), True),
+                            StructField('UnitType', StringType(), True),
+                            StructField('UnitSequenceInCallDispatch', IntegerType(), True),
+                            StructField('FirePreventionDistrict', StringType(), True),
+                            StructField('SupervisorDistrict', StringType(), True),
+                            StructField('Neighborhood', StringType(), True),
+                            StructField('Location', StringType(), True),
+                            StructField('RowID', StringType(), True),
+                            StructField('Delay', FloatType(), True)])
+
+        # Use the DataFrameReader interface to read a CSV file
+        sf_fire_file = "/databricks-datasets/learning-spark-v2/sf-fire/sf-fire-calls.csv"
+        fire_df = spark.read.csv(sf_fire_file, header=True, schema=fire_schema)
+
+
+
+- Saving a DF as a Parquet File or SQL Table
+
+
+    - Parquet is a popular columnar format that is the default format in Spark.  To save the DF to a
+        Parquet file:
+
+        file_df.write.format('parquet').save(parquet_path)
+
+
+    - Alternatively, we can save the DF as a table, which registers metadata with the Hive metastore:
+
+        file_df.write.format('parquet').saveAsTable(parquet_table)
+
+
+
+- Projections and Filters
+
+    - A 'projection' is a way to only return the rows matching certain filters.  In Spark, projections
+        are done with 'select', and filters are done with 'where' or 'filter'.
+
+
+    - To return a subset of the fire calls:
+
+        few_fire_df = (fire_df
+            .select('IncidentNumber', 'AvailableDtTm', 'CallType'))
+            .where(col('CallType') != 'Medical Incident')
+
+        few_fire_df.show(5)
+
+
+    - To get the number of distinct call types:
+
+        from pyspark.sql.functions import *
+
+        (fire_df
+            .select('CallType')
+            .where(col('CallType').isNotNull)
+            .agg(countDistinct('CallType') as 'DistinctCallTypes')
+            .show())
+
+
+    - To see all the distinct call types:
+
+        (fire_df
+            .select("CallType")
+            .where(col("CallType").isNotNull())
+            .distinct()
+            .show(10, False))
+
+
+
+- Renaming, Adding, and Dropping Columns
+
+    - Sometimes, we want to rename columns.  For instance, the fire calls dataset has column names with
+        spaces, and Parquet doesn't allow this.
+
+
+    - To get response times that were longer than 5 minutes:
+
+        new_fire_df = fire_df.withColumnRenamed("Delay", "ResponseDelayedinMins")
+
+        (new_fire_df
+            .select("ResponseDelayedinMins")
+            .where(col("ResponseDelayedinMins") > 5)
+            .show(5, False))
+
+
+    - Here, we'll convert strings to timestamps so we can use them in queries:
+
+        fire_ts_df = (new_fire_df
+           .withColumn("IncidentDate", to_timestamp(col("CallDate"), "MM/dd/yyyy"))
+           .drop("CallDate")
+           .withColumn("OnWatchDate", to_timestamp(col("WatchDate"), "MM/dd/yyyy"))
+           .drop("WatchDate")
+           .withColumn("AvailableDtTS", to_timestamp(col("AvailableDtTm"), "MM/dd/yyyy hh:mm:ss a"))
+           .drop("AvailableDtTm"))
+
+        # Select the converted columns
+        (fire_ts_df
+            .select("IncidentDate", "OnWatchDate", "AvailableDtTS")
+            .show(5, False))
+
+
+    - Now that we have these columns in timestamps, we can query using functions like 'year()', 'month()',
+        and 'day()'.  To see how many years we have represented in the data set:
+
+        (fire_ts_df
+            .select(year('IncidentDate'))
+            .distinct()
+            .orderBy(year('IncidentDate'))
+            .show())
+
+
+
+- Aggregations
+
+    - The 'groupBy()', 'orderBy()', and 'count()' functions offer the ability to aggregate by column names
+        and then aggregate counts across them.
+
+
+    - To get the most common types of fire calls:
+
+        fire_ts_df
+            .select("CallType")
+            .where(col("CallType").isNotNull())
+            .groupBy("CallType")
+            .count()
+            .orderBy("count", ascending=False)
+            .show(n=10, truncate=False))
+
+
+
+- Other Common DF Operations
+
+    - The DF API also provides descriptive statistical methods like 'min()', 'max()', 'sum()', and 'avg()'.
+
+
+    - Here, we compute the sum of alarms, the average response time, and the minimum and maximum response
+        times for all calls in our data set:
+
+        import pyspark.sql.functions as F
+
+        (fire_ts_df
+            .select(F.sum("NumAlarms"), 
+                    F.avg("ResponseDelayedinMins"),
+                    F.min("ResponseDelayedinMins"), 
+                    F.max("ResponseDelayedinMins"))
+            show()
+
+
+    - For more advanced statistical methods common with data science workloads:
+
+        stat()
+        describe()
+        correlation()
+        covariance()
+        sampleBy()
+        approxQuantile()
+        frequentItems()
+
+
+    - Questions we might use the DF API to ask:
+
+        - What were all the different types of fire calls in 2018?
+        
+        - What months within the year 2018 saw the highest number of fire calls?
+
+        - Which neighborhood in San Francisco generated the most fire calls in 2018?
+
+        - Which neighborhoods had the worst response times to fire calls in 2018?
+
+        - Which week in the year in 2018 had the most fire calls?
+
+        - Is there a correlation between neighborhood, zip code, and number of fire calls?
+
+        - How can we use Parquet files or SQL tables to store this data and read it back?
+
+
+
+- The DataSet API
+
+    - Spark 2.0 unified the DataFrame and DataSet APIs as Sturctured APIs so that developers would only
+        have to learn a single set of APIs.
+
+    - DataSets make sense only in Java and Scala, whereas in Python and R, only DataFrames make sense.
+        This is because types are dynamically inferred at runtime, not compile time.
+
+    - In Scala, a DataFrame can be used, but it is actually just an alias for Dataset[Row].
+
+
+
+- When to Use RDDs
+
+    - Scenarios where you'll want to consider using RDDs include:
+
+        - You are using a third party package written using RDDs
+        - You can forgo the code and performance optimization of DataFrames and DataSets
+        - You want to precisely instruct Spark how to do a query
+
+
+    - You can seamlessly move back and forth between DFs and RDDs, but you should avoid it unless
+        necessary.
+
+        df.rdd
+
+
+
+- Spark SQL and the Underlying Engine
+
+    - Spark SQL allows developers to issue ANSI SQL queries on structured data with a schema.  It has also
+        evolved into a substantial engine on which other higher-level structures are built.  The Spark
+        SQL engine also:
+
+        - Unifies Spark components and permits abstraction to DataFrames/Datasets in Java, Scala, Python, 
+            and R, which simplifies working with structured data sets.
+
+        - Connects to the Apache Hive metastore and tables.
+
+        - Reads and writes structured data with a specific schema from structured file formats (JSON, CSV,
+            Text, Avro, Parquet, ORC, etc.) and converts data into temporary tables.
+
+        - Offers an interactive Spark SQL shell for quick data exploration.
+
+        - Provides a bridge to (and from) external tools via standard database JDBC/ODBC connectors.
+
+        - Generates optimized query plans and compact code for the JVM, for final execution.
+
+
+    - The Catalyst optimizer and Project Tungsten are at the core of the Spark SQL engine.
+
+
+
+- The Catalyst Optimizer
+
+    - The Catalyst optimizer takes a computational query and converts it into an execution plan.  It has
+        4 phases:
+
+        1. Analysis 
+            = Generate an Abstract Syntax Tree for the query, resolve any table and column names
+
+        2. Logical Optimization
+            = Construct a set of plans and assign a cost to each plan using Cost-Based Optimizer
+
+        3. Physical Planning
+            = Generate an optimal physical plan
+
+        4. Code Generation
+            = Generate efficient Java bytecode based on physical plan
+
+
+    - To get the explain plan for a DF:
+
+        count_mnm_df.explain(True)
+
+
+    - Project Tungsten, which facilitates whole-stage code generation, collapses the whole query into a
+        single function, getting rid of function calls and using CPU registers for intermediate data.
+        This improves CPU efficiency and performance.
