@@ -1,0 +1,119 @@
+-----------------------------------------------------------------------------
+| CHAPTER 6 - SPARK SQL & DATASETS                                          |
+-----------------------------------------------------------------------------
+
+- Single API for Java and Scala
+
+    - Datasets are strongly typed distributed colections.  They are supported by Java and Scala.
+
+
+    - Scala uses case classes to define each individual fiels in a Scala object.
+
+        // Define Scala case class
+        case class Bloggers(id:Int,
+                            first:String,
+                            last:String,
+                            url:String,
+                            date:String,
+                            hits: Int,
+                            campaigns:Array[String])
+
+        // Read a file
+        val bloggers = "../data/bloggers.json"
+
+        val bloggersDS = spark
+          .read
+          .format("json")
+          .option("path", bloggers)
+          .load()
+          .as[Bloggers]
+
+
+    - Java uses JavaBean classes to define fields.
+
+        // JavaBean class
+        import org.apache.spark.sql.Encoders;
+        import java.io.Serializable;
+
+        public class Bloggers implements Serializable {
+            private int id;
+            private String first;
+            private String last;
+            private String url;
+            private String date;
+            private int hits;
+            private Array[String] campaigns;
+
+            // JavaBean getters and setters
+            int getID() { return id; }
+            void setID(int i) { id = i; }
+            String getFirst() { return first; }
+            void setFirst(String f) { first = f; }
+            String getLast() { return last; }
+            void setLast(String l) { last = l; }
+            String getURL() { return url; }
+            void setURL (String u) { url = u; }
+            String getDate() { return date; }
+            Void setDate(String d) { date = d; }
+            int getHits() { return hits; }
+            void setHits(int h) { hits = h; }
+
+            Array[String] getCampaigns() { return campaigns; }
+            void setCampaigns(Array[String] c) { campaigns = c; }
+        }
+
+
+        // Create Encoder
+        Encoder<Bloggers> BloggerEncoder = Encoders.bean(Bloggers.class);
+        String bloggers = "../bloggers.json"
+
+        Dataset<Bloggers>bloggersDS = spark
+            .read
+            .format("json")
+            .option("path", bloggers)
+            .load()
+            .as(BloggerEncoder);
+
+
+
+- Memory Management for Datasets and DataFrames
+
+    - Spark 1.0
+        - RDD-based Java objects used for memory storage, serialization and deserialization
+        - Storage was allocated on the Hava heap
+        - JVM garbage collection was used
+
+    - Spark 1.x
+        - Project Tungsten introduced
+        - New internal row-based format to lay out DFs and DSs in off-heap memory using offsets and pointers
+        - Encodes used to perform serialization and deserialization
+        - Less encumbered by GC
+
+    - Spark 2.x
+        - Second-gen Tungsten engine
+        - Whole-stage code generation
+        - Vectorized, column-based memory layout
+        - SIMD approach of modern computers
+
+
+
+- Dataset Encoders
+
+    - Encoders convert data in off-heap memory from Spark’s internal Tungsten format to JVM Java objects. In
+        other words, they serialize and deserialize Dataset objects from Spark’s internal format to JVM 
+        objects, including primitive data types.
+
+
+    - Spark has built-in support for automatically generating encoders for primitive types (e.g., string, 
+        integer, long), Scala case classes, and JavaBeans.
+
+
+
+- Costs of Using Datasets
+
+    - When Datasets are passed to higher-order functions that take lambdas and functional arguments, there
+        is a cost associated with deserializing Tungsten format into the JVM object.
+
+
+    - One way to mitigate this is to avoid excessive use of lambdas.  The second way is to chain your
+        queries together in a way that serialization and deserialization is minimized.
