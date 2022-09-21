@@ -1,0 +1,659 @@
+-----------------------------------------------------------------------------
+| CHAPTER 4 - SPARK SQL & DATAFRAMES - INTRO TO BUILT-IN DATA SOURCES       |
+-----------------------------------------------------------------------------
+
+- Using Spark SQL in Spark Applications
+
+    - The 'SparkSession' is a unified entry point for programming Spark with the Structured APIs.
+        To issue any SQL query, use the 'sql()' method on the SparkSession instance.
+
+        spark.sql('SELECT * FROM myTableName')
+
+
+    - To read in a csv file of data on US flights and create a temporary view:
+
+        from pyspark.sql import SparkSession
+
+        spark = (SparkSession
+          .builder
+          .appName("SparkSQLExampleApp")
+          .getOrCreate())
+
+        csv_file = "/databricks-datasets/learning-spark-v2/flights/departuredelays.csv"
+
+        df = (spark.read.format("csv")
+          .option("inferSchema", "true")
+          .option("header", "true")
+          .load(csv_file))
+
+        df.createOrReplaceTempView("us_delay_flights_tbl")
+
+
+    - The schema for the file looks like:
+
+        schema = "`date` STRING, `delay` INT, `distance` INT, `origin` STRING, `destination` STRING"
+
+
+    - To find all flights with a distance greater than 1,000 miles:
+
+        spark.sql("""SELECT distance, origin, destination
+                     FROM us_delay_flights_tbl WHERE distance > 1000
+                     ORDER BY distance DESC""").show(10)
+
+
+    - To find all flights between SFO and ORD with at least a 2-hour delay:
+
+        spark.sql("""SELECT date, delay, origin, destination
+                     FROM us_delay_flights_tbl
+                     WHERE delay > 120 AND ORIGIN = 'SFO' AND DESTINATION = 'ORD'
+                     ORDER by delay DESC""").show(10)
+
+
+    - Here is a more complicated query with a CASE clause.  We want to label flights according to the 
+        delays they experienced.
+
+        spark.sql("""SELECT delay, origin, destination,
+                     CASE
+                        WHEN delay > 360 THEN 'Very Long Delays'
+                        WHEN delay > 120 AND delay < 360 THEN 'Long Delays'
+                        WHEN delay > 60 AND delay < 120 THEN 'Short Delays'
+                        WHEN delay > 0 and delay < 60 THEN 'Tolerable Delays'
+                        WHEN delay = 0 THEN 'No Delays'
+                        ELSE 'Early'
+                     END AS Flight_Delays
+                     FROM us_delay_flights_tbl
+                     ORDER BY origin, delay DESC""").show(10)
+
+
+    - Note that all of these queries can be expressed in an equivalent DataFrame API query:
+
+        from pyspark.sql.functions import col, desc
+
+        (df.select("distance", "origin", "destination")
+            .where(col("distance") > 1000)
+            .orderBy(desc("distance"))).show(10)
+
+
+
+- SQL Tables and Views
+
+    - Each table in Spark has associated metadata about the table and its data:
+
+        - Schema
+        - Description
+        - Table name
+        - Database name
+        - Column names
+        - Partitions
+        - Physical location where data actually resides
+
+
+    - All of this metadata is stored in a central metastore.  By default, Spark uses the Apache Hive
+        metastore, located at /user/hive/warehouse, to persist all metadata about your tables.  
+
+      You can change the default location with the 'spark.sql.warehouse.dir' property to another location,
+        which can either be set up to be local or external distributed storage.
+
+
+    - Spark allows you to create 2 types of tables: managed and unmanaged.  For a 'managed' table, Spark
+        manages both the metadata and the data in the file store.  This could be a local filesystem, 
+        HDFS, or an object store like S3.
+
+      With an 'unmanaged' table, Spark only manages the metadata, while you manage the data in an external
+        data source such as Cassandra.
+
+
+    - With a managed table, a SQL command such as DROP TABLE deletes both the metadata and the table.
+        With an unmanaged table, the same command will only delete the metadata.
+
+
+
+- Creating SQL Databases and Tables
+
+    - Tables reside within a database.  By default, Spark creates tables under the 'default' database.
+        To create your own database name, you can issue a command from your application.
+
+
+    - For the 'US Flight Delays' dataset, we'll create both a managed and unmanaged table.  First, we'll
+        create a database.
+
+        spark.sql("CREATE DATABASE learn_spark_db")
+        spark.sql("USE learn_spark_db")
+
+
+    - To create a managed table:
+
+        # In SQL
+        spark.sql("CREATE TABLE managed_us_delay_flights_tbl (date STRING, delay INT,
+            distance INT, origin STRING, destination STRING)")
+
+        # To do the same thing with a DF
+        csv_file = "/databricks-datasets/learning-spark-v2/flights/departuredelays.csv"
+        schema="date STRING, delay INT, distance INT, origin STRING, destination STRING"
+        flights_df = spark.read.csv(csv_file, schema=schema)
+        flights_df.write.saveAsTable("managed_us_delay_flights_tbl")
+
+
+    - You can create unmanaged tables from your own data sources.  To create an unmanaged table from a
+        CSV file:
+
+        # In SQL
+        spark.sql("""CREATE TABLE us_delay_flights_tbl(date STRING, delay INT,
+                       distance INT, origin STRING, destination STRING)
+                     USING csv OPTIONS (
+                     PATH '/databricks-datasets/learning-spark-v2/flights/departuredelays.csv')""")
+
+        # With a DF
+        (flights_df
+            .write
+            .option("path", "/tmp/data/us_flights_delay")
+            .saveAsTable("us_delay_flights_tbl"))
+
+
+    - When running from the pyspark shell,
+
+        - To get all the conifguration settings:
+
+            spark.sparkContext.getConf().getAll()
+
+
+        - The Hive Metastore is called 'metastore_db' and placed in the same directory we are running in.
+
+        - The data is stored in 'spark-warehouse', also in the same directory we are running in.
+
+        - This is controlled by the 'spark.sql.warehouse.dir' config setting.
+
+
+
+- Creating Views
+
+    - In addition to creating tables, Spark can also create views on top of existing tables.  Views can
+        be global (visible across all SparkSessions on a cluster) or session-scoped (only visible to a
+        single SparkSession).
+
+
+    - Views are temporary.  They disappear after your application terminates.  In contrast, tables persist
+        after your Spark application terminates.
+
+
+    - To create a global view from an existing table: 
+
+        # In SQL (Global)
+        CREATE OR REPLACE GLOBAL TEMP VIEW us_origin_airport_SFO_global_tmp_view AS
+          SELECT date, delay, origin, destination from us_delay_flights_tbl WHERE
+          origin = 'SFO';
+
+
+    - To create a session-scoped view from an existing table:
+
+        # In SQL (Session-scoped)
+        CREATE OR REPLACE TEMP VIEW us_origin_airport_JFK_tmp_view AS
+          SELECT date, delay, origin, destination from us_delay_flights_tbl WHERE
+          origin = 'JFK';
+
+
+    - To create the DataFrames in Python:
+
+        df_sfo = spark.sql("SELECT date, delay, origin, destination FROM
+            us_delay_flights_tbl WHERE origin = 'SFO'")
+
+        df_jfk = spark.sql("SELECT date, delay, origin, destination FROM
+            us_delay_flights_tbl WHERE origin = 'JFK'")
+
+
+    - To create the global and session-scoped views in Python:
+
+        # Global
+        df_sfo.createOrReplaceGlobalTempView("us_origin_airport_SFO_global_tmp_view")
+
+        # Session-scoped
+        df_jfk.createOrReplaceTempView("us_origin_airport_JFK_tmp_view")
+
+
+    - To select from a global view, you must prefix it with 'global_temp':
+
+        # Select from global
+        SELECT * FROM global_temp.us_origin_airport_SFO_global_tmp_view;
+
+
+    - To select from a session-scoped view (Any of these work):
+
+        # SQL
+        SELECT * FROM us_origin_airport_JFK_tmp_view;
+
+        # With a DF
+        spark.read.table("us_origin_airport_JFK_tmp_view")
+
+        # With a DF
+        spark.sql("SELECT * FROM us_origin_airport_JFK_tmp_view")
+
+
+    - You can also drop a view just like you do a table:
+
+        # SQL
+        DROP VIEW IF EXISTS us_origin_airport_SFO_global_tmp_view;
+        DROP VIEW IF EXISTS us_origin_airport_JFK_tmp_view;
+
+        # Python
+        spark.catalog.dropGlobalTempView("us_origin_airport_SFO_global_tmp_view")
+        spark.catalog.dropTempView("us_origin_airport_JFK_tmp_view")
+
+
+    - What is the use for a global view anyways?  Global views can be used in multiple SparkSessions within
+        an application.  This can be handy when you want to combine data from different SparkSessions
+        that don't share the same Hive Metastore configuration.
+
+
+
+- Viewing the Metadata
+
+    - Spark manages the metadata associated with each managed or unmanaged table in the 'Catalog'.  To
+        examine the metadata:
+
+        spark.catalog.listDatabases()
+        spark.catalog.listTables()
+        spark.catalog.listColumns("us_delay_flights_tbl")
+
+
+    - In Spark 3.0, an external catalog can be used.
+
+
+
+- Caching SQL Tables
+
+    - Like DFs, SQL tables and views can be cached and uncached.
+
+        CACHE TABLE table-name
+        UNCACHE TABLE table-name
+
+
+    - In Spark 3.0, the 'LAZY' keyword was added, which means a table should only be cached when it is first
+        used, not immediately.
+
+        CACHE LAZY TABLE table-name
+
+
+
+- Reading Tables into DFs
+
+    - Often, DEs build data pipelines as part of their regular data ingestion and ETL processes.  They
+        populate Spark SQL databases and tables with cleansed data for consumption by applications 
+        downstream.
+
+
+    - Let's assume we have an existing database 'learn_spark_db' with a 'us_delay_flights_tbl' table.
+        Instead of reading from an external JSON file, you can simply use SQL to query the table and
+        assign the result to a DF:
+
+        us_flights_df = spark.sql("SELECT * FROM us_delay_flights_tbl")
+        us_flights_df2 = spark.table("us_delay_flights_tbl")
+
+
+
+- DataFrameReader
+
+    - DataFrameReader is the core construct for reading data from an external data source into a DF.
+        It is accessed from the SparkSession.  It has a format like this:
+
+        DataFrameReader.format(args).option("key", "value").schema(args).load()
+
+
+    - The arguments for these methods:
+
+        format()        # Possible values: 
+                            "parquet", "csv", "txt", "json", "jdbc", "orc", "avro", etc.
+
+        option()        # Possible values:
+                            ("mode", {PERMISSIVE | FAILFAST | DROPMALFORMED } )    # JSON and CSV
+                            ("inferSchema", {true | false})                        # JSON and CSV
+                            ("path", "path_file_data_source")
+
+        schema()        # DDL string or StructType
+
+        load()          # '/path/to/data/source'
+
+
+
+- DataFrameWriter
+
+    - DataFrameWriter saves or writes to a built-in data source.  It is accessed from the DF you want to
+        save.  It has a format like this:
+
+        DataFrameWriter.format(args)
+           .option(args)
+           .bucketBy(args)
+           .partitionBy(args)
+           .save(path)
+
+
+    - To get an instance handle:
+
+        DataFrame.write
+        DataFrame.writeStream
+
+
+    - The arguments for these methods:
+
+        format()        # Same as Reader
+
+        option()        # Possible values:
+                            ("mode", {append | overwrite | ignore | error or errorifexists} )
+                            ("mode", {SaveMode.Overwrite | SaveMode.Append, SaveMode.Ignore, 
+                                      SaveMode.ErrorIfExists})
+                            ("path", "path_to_write_to")
+
+        bucketby()      # (numBuckets, col, col..., coln)
+
+        save()          # '/path/to/data/source'
+
+        saveAsTable()   # 'table_name'
+
+
+
+- Parquet
+
+    - In general, when we read from Parquet, we don't need to provide the schema since it is contained in
+        metadata.  We do need to provide it with streaming data.
+
+
+    - Parquet is the default and preferred data source for Spark because it’s efficient, uses
+        columnar storage, and employs a fast compression algorithm.  Once we transform and clean data, it 
+        is recommended that we save the DF in the Parquet format for downsteam consumption.
+
+
+    - For example, a directory in a Parquet file might contain a set of files like this:
+
+        _SUCCESS
+        _committed_1799640464332036264
+        _started_1799640464332036264
+        part-00000-tid-1799640464332036264-91273258-d7ef-4dc7-<...>-c000.snappy.parquet
+
+
+    - To read Parquet files into a DF:
+
+        file = """/databricks-datasets/learning-spark-v2/flights/summary-data/parquet/
+            2010-summary.parquet/"""
+
+        df = spark.read.format("parquet").load(file)
+
+
+    - To read Parquet files into a Spark SQL table:
+
+        # In SQL
+        CREATE OR REPLACE TEMPORARY VIEW us_delay_flights_tbl
+        USING parquet
+        OPTIONS (
+          path "/databricks-datasets/learning-spark-v2/flights/summary-data/parquet/2010-summary.parquet/"
+        )
+
+        # Now we can query the table
+        spark.sql("SELECT * FROM us_delay_flights_tbl").show()
+
+
+    - To write a DF to a Parquet file:
+
+        (df.write.format("parquet")
+            .mode("overwrite")
+            .option("compression", "snappy")
+            .save("/tmp/data/parquet/df_parquet"))
+
+      For brevity, this example only generated one file.  Normally, there may be a dozen of so files 
+        created.
+
+        -rw-r--r-- 1 jules wheel 0 May 19 10:58 _SUCCESS
+        -rw-r--r-- 1 jules wheel 966 May 19 10:58 part-00000-<...>-c000.snappy.parquet
+
+
+    - To write a DF to a Spark SQL table:
+
+        (df.write
+            .mode("overwrite")
+            .saveAsTable("us_delay_flights_tbl"))
+
+
+
+- JSON
+
+    - JSON has 2 representational formats: single-line mode and multiline mode.  To read in multiline mode,
+        we set the 'multiline' option.
+
+
+    - To read a JSON file into a DF:
+
+        file = "/databricks-datasets/learning-spark-v2/flights/summary-data/json/*"
+        df = spark.read.format("json").load(file)
+
+
+    - To read a JSON file into a Spark SQL table:
+
+        # In SQL
+        CREATE OR REPLACE TEMPORARY VIEW us_delay_flights_tbl
+        USING json
+        OPTIONS (
+          path "/databricks-datasets/learning-spark-v2/flights/summary-data/json/*"
+        )
+
+        # Now we can query the table
+        spark.sql("SELECT * FROM us_delay_flights_tbl").show()
+
+
+    - To write a DF to a JSON file:
+
+        (df.write.format("json")
+            .mode("overwrite")
+            .option("compression", "snappy")
+            .save("/tmp/data/json/df_json"))
+
+      This will create a directory at the specified path with a set of compact JSON files:
+
+        -rw-r--r-- 1 jules wheel 0 May 16 14:44 _SUCCESS
+        -rw-r--r-- 1 jules wheel 71 May 16 14:44 part-00000-<...>-c000.json
+
+
+    - Common options for reading and writing JSON:
+
+        compression         # none, uncompressed, bzip2, deflate, gzip, lz4, or snappy
+
+        dateFormat          # yyyy-MM-dd or DateTimeFormatter
+
+        multiLine           # true, false
+
+        allowUnquotedFieldNames        # true, false 
+
+
+
+- CSV
+
+    - We can read CSVs as well as other-delimited files.
+
+
+    - To read a CSV file into a DF:
+
+        file = "/databricks-datasets/learning-spark-v2/flights/summary-data/csv/*"
+        schema = "DEST_COUNTRY_NAME STRING, ORIGIN_COUNTRY_NAME STRING, count INT"
+
+        df = (spark.read.format("csv")
+                   .option("header", "true")
+                   .schema(schema)
+                   .option("mode", "FAILFAST")   # Exit if any errors
+                   .option("nullValue", "")      # Replace any null data field with quotes
+                   .load(file))
+
+
+    - To read a CSV file into a Spark SQL table:
+
+        # In SQL
+        CREATE OR REPLACE TEMPORARY VIEW us_delay_flights_tbl
+        USING csv
+        OPTIONS (
+          path "/databricks-datasets/learning-spark-v2/flights/summary-data/csv/*",
+          header "true",
+          inferSchema "true",
+          mode "FAILFAST"
+        )
+
+        # Now we can query the table
+        spark.sql("SELECT * FROM us_delay_flights_tbl").show(10)
+
+
+    - To write a DF to a CSV file:
+
+        df.write.format("csv").mode("overwrite").save("/tmp/data/csv/df_csv")
+
+      This generates a folder at the specified location, populated with a bunch of compressed and compact
+        files.
+
+        -rw-r--r-- 1 jules wheel 0 May 16 12:17 _SUCCESS
+        -rw-r--r-- 1 jules wheel 36 May 16 12:17 part-00000-251690eb-<...>-c000.csv
+
+
+    - Common options for reading and writing CSV files:
+
+        compression          # none, bzip2, deflate, gzip, lz4, or snappy
+
+        dateFormat           # yyyy-MM-dd or DateTimeFormatter
+
+        multiLine            # true, false
+
+        inferSchema          # true, false
+
+        sep                  # Any character
+
+        escape               # Any character
+
+        header               # true, false
+
+
+
+- Avro
+
+    - Avro is often used by Kafka for serializing and deserializing messages.  It offers many benefits,
+        including direct mapping to JSON, speed and efficiency, and clients in many PLs.
+
+
+    - To read an Avro file into a DF:
+
+        df = (spark.read.format("avro")
+                   .load("/databricks-datasets/learning-spark-v2/flights/summary-data/avro/*"))
+
+        df.show(truncate=False)
+
+
+    - To read an Avro file into a Spark SQL table:
+
+        # In SQL
+        CREATE OR REPLACE TEMPORARY VIEW episode_tbl
+        USING avro
+        OPTIONS (
+          path "/databricks-datasets/learning-spark-v2/flights/summary-data/avro/*"
+        )
+
+        # Now we can query the table
+        spark.sql("SELECT * FROM episode_tbl").show(truncate=False)
+
+
+    - To write a DF to an Avro file:
+
+        (df.write
+            .format("avro")
+            .mode("overwrite")
+            .save("/tmp/data/avro/df_avro"))
+
+      This generates a folder with a bunch of compressed and compact files.
+
+
+    - Common options for reading and writing Avro:
+
+        avroSchema        # None by default
+
+        recordName        # topLevelRecord by default
+
+        recordNamespace   # '' by default
+
+        ignoreExtension   # true by default
+
+        compression       # snappy (default), uncompressed, deflate, bzip2, xz
+
+
+
+- ORC
+
+    - ORC is another columnar format.  Spark supports a vectorized ORC reader in addition to the normal
+        ORC reader.
+
+
+    - To read an ORC file into a DF:
+
+        file = "/databricks-datasets/learning-spark-v2/flights/summary-data/orc/*"
+        df = spark.read.format("orc").option("path", file).load()
+        df.show(10, False)
+
+
+    - To read an ORC file into a Spark SQL table:
+
+        CREATE OR REPLACE TEMPORARY VIEW us_delay_flights_tbl
+        USING orc
+        OPTIONS (
+          path "/databricks-datasets/learning-spark-v2/flights/summary-data/orc/*"
+        )
+
+
+    - To write a DF to ORC files:
+
+        (df.write.format("orc")
+            .mode("overwrite")
+            .option("compression", "snappy")
+            .save("/tmp/data/orc/flights_orc"))
+
+
+
+- Images
+
+    - Image files have been added to support DL and ML frameworks.
+
+
+    - To read an image into a DF:
+
+        from pyspark.ml import image
+
+        image_dir = "/databricks-datasets/learning-spark-v2/cctvVideos/train_images/"
+        images_df = spark.read.format("image").load(image_dir)
+
+        # See image schema
+        images_df.printSchema()
+
+        # Get image features
+        images_df.select("image.height", "image.width", "image.nChannels", "image.mode", "label")
+                 .show(5, truncate=False)
+
+
+
+- Binary Files
+
+    - Spark 3.0 adds binary files as a data source.  The DataFrameReader converts each binary file into
+        a single DF row that contains the raw content and metadata of the file.  The DF has these
+        columns:
+
+        path
+        modificationTime
+        length
+        content
+
+
+    - To read a binary file into a DF:
+
+        path = "/databricks-datasets/learning-spark-v2/cctvVideos/train_images/"
+
+        binary_files_df = (spark.read.format("binaryFile")
+                                 .option("pathGlobFilter", "*.jpg")
+                                 .load(path))
+
+        binary_files_df.show(5)
+
+
+    - To ignore partitioning data discovery in a directory, you can set 'recursiveFileLookup' to true.
+
+        binary_files_df = (spark.read.format("binaryFile")
+                                .option("pathGlobFilter", "*.jpg")
+                                .option("recursiveFileLookup", "true")
+                                .load(path))
