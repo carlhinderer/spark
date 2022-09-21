@@ -324,3 +324,401 @@
     - Snowflake
     - MongoDB
     - Many others...
+
+
+
+- Higher-Order Functions in DFs and Spark SQL
+
+    - There are 2 typical solutions for manipulating complex data types:
+
+        1. Explode the nested structure into individual rows, apply some function, then recreate the 
+             nested structure.
+
+        2. Build a UDF
+
+
+    - For option 1, to explode and collect, we 'explode(values)' which creates a new row (with the id)
+        for each element in 'values':
+
+        SELECT id, collect_list(value + 1) AS values
+        FROM (SELECT id, EXPLODE(values) AS value
+              FROM table) x
+        GROUP BY id
+
+      Here, the GROUP BY statement requires shuffle operations, so this approach could be very expensive.
+
+
+    - For option 2, to perform the same task (add 1 to each element), we can create a UDF that uses 'map()'
+        to iterate through each element and perform the addition.  This doesn't require a shuffle, but
+        may run out of memory on large data sets.
+
+        spark.sql("SELECT id, plusOneInt(values) AS values FROM table").show()
+
+
+
+- Built-in Functions for Complex Data Types
+
+    - Instead of using these potentially expensive techniques, you may be able to use some of the built-in
+        functions for complex data types.
+
+
+    - Array functions:
+
+        array_distinct(array<T>): array<T>
+        array_intersect(array<T>, array<T>): array<T>
+        array_union(array<T>, array<T>): array<T>
+        array_except(array<T>, array<T>): array<T>
+        array_join(array<String>, String[, String]): String
+
+        array_max(array<T>): T
+        array_min(array<T>): T
+
+        array_position(array<T>, T): Long
+        array_remove(array<T>, T): array<T>
+
+        array_position(array<T>, T): Long
+        array_remove(array<T>, T): array<T>
+        arrays_overlap(array<T>, array<T>): array<T>
+        array_sort(array<T>): array<T>
+        concat(array<T>, ...): array<T>
+        flatten(array<array<T>>): array<T>
+        array_repeat(T, Int): array<T>
+        reverse(array<T>): array<T>
+        sequence(T, T[, T]): array<T>
+        shuffle(array<T>): array<T>
+        slice(array<T>, Int, Int): array<T>
+        array_zip(array<T>, array<U>, ...): array<struct<T, U, ...>>
+
+        element_at(array<T>, Int): T
+        cardinality(array<T>): Int
+
+
+    - Map functions:
+
+        map_form_arrays(array<K>, array<V>): map<K, V>
+        map_from_entries(array<struct<K, V>>): map<K, V>
+        map_concat(map<K, V>, ...): map<K, V>
+        element_at(map<K, V>, K): V
+        cardinality(array<T>): Int
+
+
+
+- Higher-Order Functions
+
+    - In addition to the built-in functions, there are higher-order functions that take lambda functions
+        as arguments.
+
+        # In SQL
+        transform(values, value -> lambda expression)
+
+
+    - First, we'll create a sample data set to run some examples:
+
+        from pyspark.sql.types import *
+        schema = StructType([StructField("celsius", ArrayType(IntegerType()))])
+
+        t_list = [[35, 36, 32, 30, 40, 42, 38]], [[31, 32, 34, 55, 56]]
+        t_c = spark.createDataFrame(t_list, schema)
+        t_c.createOrReplaceTempView("tC")
+        
+        # Show the DataFrame
+        t_c.show()
+        
+
+    - The 'transform()' function produces an array by applying a function to each element in the input
+        array.
+
+        spark.sql("""
+            SELECT celsius,
+                   transform(celsius, t -> ((t * 9) div 5) + 32) as fahrenheit
+            FROM tC
+        """).show()
+
+
+    - The 'filter()' function produces an array consisting of only the elements that return True for a
+        condition.
+
+        spark.sql("""
+            SELECT celsius,
+                   filter(celsius, t -> t > 38) as high
+            FROM tC
+        """).show()
+
+
+    - The 'exists()' function returns true if the Boolean function holds for any element in the input array.
+
+        spark.sql("""
+            SELECT celsius,
+                   exists(celsius, t -> t = 38) as threshold
+            FROM tC
+        """).show()
+
+
+    - The 'reduce()' function reduces the elements of the array to a single value by merging the elements
+        into a single value.
+
+        spark.sql("""
+        SELECT celsius,
+               reduce(
+                   celsius,
+                   0,
+                  (t, acc) -> t + acc,
+                  acc -> (acc div size(celsius) * 9 div 5) + 32
+                ) as avgFahrenheit
+        FROM tC
+        """).show()
+
+
+
+- Common DataFrames and Spark SQL Operations
+
+    - There is a extensive list of DF operations available.  Consult the Spark documentation if you're
+        looking for something:
+
+        - Aggregate functions
+        - Collection functions
+        - Datetime functions
+        - Math functions
+        - Miscellaneous functions
+        - Non-aggregate functions
+        - Sorting functions
+        - String functions
+        - UDF functions
+        - Window functions
+
+
+    - First, we'll set up some data for examples:
+
+        1. Import 2 files and create 2 DFs, one for airports and one for US flight delays.
+
+        2. Convert the delay and distance columns from STRING to INT.
+
+        3. Create a smaller table that only focuses on flights from SEA for SFO for a small time range.
+
+
+    - To set this up:
+
+        from pyspark.sql.functions import expr
+        
+        tripdelaysFilePath = "/databricks-datasets/learning-spark-v2/flights/departuredelays.csv"
+        airportsnaFilePath = "/databricks-datasets/learning-spark-v2/flights/airport-codes-na.txt"
+
+        # Obtain airports data set
+        airportsna = (spark.read
+            .format("csv")
+            .options(header="true", inferSchema="true", sep="\t")
+            .load(airportsnaFilePath))
+
+        airportsna.createOrReplaceTempView("airports_na")
+
+        # Obtain departure delays data set
+        departureDelays = (spark.read
+            .format("csv")
+            .options(header="true")
+            .load(tripdelaysFilePath))
+
+        departureDelays = (departureDelays
+            .withColumn("delay", expr("CAST(delay as INT) as delay"))
+            .withColumn("distance", expr("CAST(distance as INT) as distance")))
+
+        departureDelays.createOrReplaceTempView("departureDelays")
+
+        # Create temporary small table
+        foo = (departureDelays
+            .filter(expr("""origin == 'SEA' and destination == 'SFO' and
+                         date like '01010%' and delay > 0""")))
+
+        foo.createOrReplaceTempView("foo")
+
+
+    - To look at the data:
+
+        # Airports data set
+        spark.sql("SELECT * FROM airports_na LIMIT 10").show()
+
+        # Departure delays data set
+        spark.sql("SELECT * FROM departureDelays LIMIT 10").show()
+
+        # Smaller data set
+        spark.sql("SELECT * FROM foo").show()
+
+
+
+- Unions
+
+    - To union 2 different datasets with the same schema together, we use the 'union()' function.
+
+        # Union two tables
+        bar = departureDelays.union(foo)
+        bar.createOrReplaceTempView("bar")
+
+        # Show the union (filtering for SEA and SFO in specified time range)
+        bar.filter(expr("""origin == 'SEA' AND destination == 'SFO'
+                           AND date LIKE '01010%' AND delay > 0""")).show()
+
+
+    - As expected, when we use the same filtering criteria, we see a duplication of the 'foo' data:
+
+        spark.sql("""
+        SELECT *
+          FROM bar
+        WHERE origin = 'SEA'
+          AND destination = 'SFO'
+          AND date LIKE '01010%'
+          AND delay > 0
+        """).show()
+
+
+
+- Joins
+
+    - By default, a Spark join is an inner join.  The complete list of options is:
+
+        [inner, cross, outer, full, full_outer, left, left_outer, right, right_outer, left_semi, left_anti]
+
+
+    - To join the airports and 'foo' DFs:
+
+        # Join departure delays data (foo) with airport info
+        foo.join(
+            airports,
+            airports.IATA == foo.origin
+        ).select("City", "State", "date", "delay", "distance", "destination").show()
+
+        # In SQL
+        spark.sql("""
+        SELECT a.City, a.State, f.date, f.delay, f.distance, f.destination
+        FROM foo f
+        JOIN airports_na a
+        ON a.IATA = f.origin
+        """).show()
+
+
+
+- Windowing
+
+    - A 'window function' uses values from the rows in a window (a range of input rows) to return a set
+        of values in the form of another row.  It is a way to operate on a group of rows, while still
+        returning a value for each input row.
+
+
+    - Window Functions
+
+                                SQL               DF API
+        --------------------------------------------------------                        
+        Ranking functions       rank()            rank()
+                                dense_rank()      denseRank()
+                                percent_rank()    percentRank()
+                                ntile()           ntile()
+                                row_number()      rowNumber()
+
+        Analytic functions      cume_dist()       cumeDist()
+                                first_value()     firstValue()
+                                last_value()      lastValue()
+                                lag()             lag()
+                                lead()            lead()
+
+
+    - Let's look at 'TotalDelays' (calculated by sum(Delay)) experienced by flights originating from SEA,
+        SFO, and JFK going to specific destinations:
+
+        # In SQL
+        DROP TABLE IF EXISTS departureDelaysWindow;
+
+        CREATE TABLE departureDelaysWindow AS
+        SELECT origin, destination, SUM(delay) AS TotalDelays
+        FROM departureDelays
+        WHERE origin IN ('SEA', 'SFO', 'JFK')
+        AND destination IN ('SEA', 'SFO', 'JFK', 'DEN', 'ORD', 'LAX', 'ATL')
+        GROUP BY origin, destination;
+
+        SELECT * FROM departureDelaysWindow;
+
+
+    - Now, you want to find the 3 destinations that experienced the most delays.  You can accomplish this
+        by running 3 different queries (one for each origin), then unioning the results together.
+
+        # For one of the origins
+        SELECT origin, destination, SUM(TotalDelays) AS TotalDelays
+        FROM departureDelaysWindow
+        WHERE origin = '[ORIGIN]'
+        GROUP BY origin, destination
+        ORDER BY SUM(TotalDelays) DESC
+        LIMIT 3
+
+
+    - But a better approach would be to use a Window function like 'dense_rank()' to perform the 
+        calculation:
+
+        # In SQL
+        spark.sql("""
+          SELECT origin, destination, TotalDelays, rank
+          FROM (
+            SELECT origin, destination, TotalDelays, dense_rank()
+            OVER (PARTITION BY origin ORDER BY TotalDelays DESC) as rank
+                 FROM departureDelaysWindow
+          ) t
+          WHERE rank <= 3
+        """).show()
+
+
+
+- Modifications
+
+    - Another common operation is to perform modifications to the DF.  We'll start with our previous 'foo'
+        DF.
+
+
+    - To add a new column to the DF:
+
+        from pyspark.sql.functions import expr
+
+        foo2 = (foo.withColumn(
+                  "status", expr("CASE WHEN delay <= 10 THEN 'On-time' ELSE 'Delayed' END")
+        ))
+
+        foo2.show()
+
+
+    - To drop a column from the DF:
+
+        foo3 = foo2.drop("delay")
+        foo3.show()
+
+
+    - To rename a column from the DF:
+
+        foo4 = foo3.withColumnRenamed("status", "flight_status")
+        foo4.show()
+
+
+    - Sometimes, you need to 'pivot' your data, meaning to swap columns for rows.
+
+        # Initial data
+        SELECT destination, CAST(SUBSTRING(date, 0, 2) AS int) AS month, delay
+        FROM departureDelays
+        WHERE origin = 'SEA'
+
+        # Results
+        +-----------+-----+-----+
+        |destination|month|delay|
+        +-----------+-----+-----+
+        | ORD       | 1   | 92  |
+
+
+        # Now, place names in month column and perform aggregates by destination and month
+        SELECT * FROM (
+          SELECT destination, CAST(SUBSTRING(date, 0, 2) AS int) AS month, delay
+          FROM departureDelays WHERE origin = 'SEA'
+        )
+        PIVOT (
+          CAST(AVG(delay) AS DECIMAL(4, 2)) AS AvgDelay, MAX(delay) AS MaxDelay
+          FOR month IN (1 JAN, 2 FEB)
+        )
+        ORDER BY destination
+
+        # Results
+        +-----------+------------+------------+------------+------------+
+        |destination|JAN_AvgDelay|JAN_MaxDelay|FEB_AvgDelay|FEB_MaxDelay|
+        +-----------+------------+------------+------------+------------+
+        | ABQ       | 19.86      | 316        | 11.42      | 69         |
