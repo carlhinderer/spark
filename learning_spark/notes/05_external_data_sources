@@ -1,0 +1,326 @@
+-----------------------------------------------------------------------------
+| CHAPTER 5 - SPARK SQL & DATAFRAMES - EXTERNAL DATA SOURCES                |
+-----------------------------------------------------------------------------
+
+- Spark SQL and Apache Hive
+
+    - Shark (Spark on Hive) was one of the first interactive query engines on Hadoop systems.  It 
+        demonstrated that one system could be as fast as an enterprise data warehouse while scaling as
+        well as Hive/MapReduce.
+
+
+
+- Spark SQL UDFs
+
+    - To write a Spark SQL UDF:
+
+        from pyspark.sql.types import LongType
+
+        # Create cubed function
+        def cubed(s):
+            return s * s * s
+
+        # Register UDF
+        spark.udf.register("cubed", cubed, LongType())
+
+        # Generate temporary view
+        spark.range(1, 9).createOrReplaceTempView("udf_test")
+
+        # Query the cubed UDF
+        spark.sql("SELECT id, cubed(id) AS id_cubed FROM udf_test").show()
+
+
+
+- Evaluation Order and Null Checking
+
+    - Spark SQL (which includes SQL, the DataFrame API, and the Dataset API) does not guarantee the order
+        of evaluation of subexpressions.  
+
+
+    - For example, this query does not guarantee that the null check happens before the strlen call:
+
+        spark.sql("SELECT s FROM test1 WHERE s IS NOT NULL AND strlen(s) > 1")
+
+
+    - To perform proper null checking, you should either:
+
+        1. Make the UDF itself null-aware and do null checking inside the UDF
+
+        2. Use IF or CASE WHEN expressions to do the null check and invoke the UDF in a conditional branch.
+
+
+
+- Speeding Up and Distributing PySpark UDFs with Pandas UDFs
+
+    - One previous issue with PySpark UDFs is that they had worse performance than Scala UDFs.  This was
+        because Spark UDFs required data movement between the JVM and Python, which was quite expensive.
+
+
+    - To resolve this problem, Pandas UDFs (aka vectorized UDFs) were introduce in Spark 2.3.  They use
+        Apache Arrow to transfer data and Pandas to work with the data.  You define a pandas UDF by using
+        the 'pandas_udf' decorator:
+
+        import pandas as pd
+
+        from pyspark.sql.functions import col, pandas_udf
+        from pyspark.sql.types import LongType
+
+        # Declare the cubed function
+        def cubed(a: pd.Series) -> pd.Series:
+            return a * a * a
+
+        # Create the pandas UDF for the cubed function
+        cubed_udf = pandas_udf(cubed, returnType=LongType())
+
+
+    - Now, we can call the Pandas function.  The Panda Function API lets us call methods where both the
+        input and output are pandas DFs.
+
+        # Create a pandas Series
+        x = pd.Series([1, 2, 3])
+
+        # Use our UDF with local pandas data
+        print(cubed(x))
+
+        # Now create a Spark DF
+        df = spark.range(1, 4)
+
+        # Use our UDF on a Spark DF
+        print(cubed(x))
+
+
+
+- Querying with the Spark SQL Shell
+
+    - The spark-sql CLI is a convenient tool for executing Spark SQL queries.  While this utility 
+        communicates with the Hive metastore service in local mode, it does not talk to the
+        Thrift JDBC/ODBC server (aka the 'Spark Thrift Server').
+
+
+    - The STS allows JDBC/ODBC clients to execute SQL queries over JDBC and ODBC protocols on Spark.
+
+
+    - To start the Spark SQL client:
+
+        $ ./bin/spark-sql
+
+
+    - To create a new permanent Spark SQL table:
+
+        spark-sql> CREATE TABLE people (name STRING, age int);
+
+      The new table will be created in the 'spark-warehouse' directory.
+
+
+    - To insert data into the table:
+
+        spark-sql> INSERT INTO people VALUES ("Michael", NULL);
+        spark-sql> INSERT INTO people VALUES ("Andy", 30);
+        spark-sql> INSERT INTO people VALUES ("Samantha", 19);
+
+
+    - Running a Spark SQL query:
+
+        # Show the tables in our metastore
+        spark-sql> SHOW TABLES;
+
+        # Run some queries
+        spark-sql> SELECT * FROM people WHERE age < 20;
+        spark-sql> SELECT name FROM people WHERE age IS NULL;
+
+
+
+- Working with Beeline
+
+    - Beeline is a common utility for running HiveQL queries against HiveServer2.  It is a JDBC client.
+        We can use it to execute Spark SQL queries against the Spark Thrift Server.
+
+
+    - To start the Thrift server:
+
+        # Start the Spark driver and worker first if not already done
+        $ ./sbin/start-all.sh
+
+        # Start the Thrift server
+        $ ./sbin/start-thriftserver.sh
+
+
+    - Next, start Beeline:
+
+        # Start Beeline
+        $ ./bin/beeline
+
+        # Configure Beeline to conect to the local Thrift server
+        !connect jdbc:hive2://localhost:10000
+
+
+    - To execute a Spark SQL query from Beeline:
+
+        jdbc:hive2://localhost:10000> SHOW tables;
+
+        jdbc:hive2://localhost:10000> SELECT * FROM people;
+
+
+    - To stop the Thrift server:
+
+        $ ./sbin/stop-thriftserver.sh
+
+
+
+- Working with Tableau
+
+    - Similarly to running queries through Beeline or the Spark SQL CLI, you can connect your favorite
+        BI tool to Spark SQL via the Thrift JDBC/ODBC server.
+
+
+    - These are the steps to connect:
+
+        1. Start the Spark Thrift Server
+
+        2. Go to 'Connect > Spark SQL' in Tableau Desktop and add the connection details
+
+        3. Select a schema and a table to query
+
+        4. Now, we can execute queries against the Spark data source, join tables, etc.
+
+
+    - Remember to stop the Thrift server when you are done.
+
+
+
+- JDBC and SQL Databases
+
+    - Spark SQL has a data source API that can read data from other databases using JDBC.  To get started,
+        you'll need to specify the JDBC driver for the source you want to read using the Spark classpath:
+
+        $ /.bin/spark-shell --driver-class-path $database.jar --jars $database.jar
+
+
+    - When transferring large amounts of data between Spark SQL and JDBC, it's important to partition
+        your data source, instead of all the data going through one driver connection.  To do this, we
+        set:
+
+        numPartitions             # Max number of concurrent JDBC connections
+        partitionColumn           # Column used to determine the partitions
+        lowerBound                # Minimum value of partitionColumn
+        upperBound                # Maximum value of partitionColumn
+
+
+    - For example, if we have the following settings:
+
+        numPartitions = 10
+        lowerBound = 1000
+        upperBound = 10000
+
+      Then we will get 10 queries:
+
+        SELECT * FROM table WHERE partitionColumn BETWEEN 1000 AND 2000
+        ...
+        SELECT * FROM table WHERE partitionColumn BETWEEN 9000 AND 10000
+
+
+    - Tips for partitioning:
+
+        - A good starting point is to use a multiple of the number of worker nodes.  If you have 4 worker
+            nodes, use 8 partitions.
+
+        - Use actual lower and upper bounds.  If your range is larger than the actual range, most of the
+            work will be in a few partitions.
+
+        - Choose a uniformly distributed partition column or create a new one to evenly distributed your
+            partitions.
+
+
+
+- PostgreSQL
+
+    - To connect to a PostgreSQL database, build or download the JDBC jar and add it to your classpath.  To
+        start a Spark shell specifying the jar:
+
+        $ bin/spark-shell --jars postgresql-42.2.6.jar
+
+
+    - To read data from a JDBC source using the 'load()' method:
+
+        jdbcDF1 = (spark
+            .read
+            .format("jdbc")
+            .option("url", "jdbc:postgresql://[DBSERVER]")
+            .option("dbtable", "[SCHEMA].[TABLENAME]")
+            .option("user", "[USERNAME]")
+            .option("password", "[PASSWORD]")
+            .load())
+
+
+    - To read data from a JDBC source using the 'jdbc' method:
+
+        jdbcDF2 = (spark
+            .read
+            .jdbc("jdbc:postgresql://[DBSERVER]", "[SCHEMA].[TABLENAME]",
+                  properties={"user": "[USERNAME]", "password": "[PASSWORD]"}))
+
+
+    - To write data to a JDBC source using the 'save()' method:
+
+        (jdbcDF1
+            .write
+            .format("jdbc")
+            .option("url", "jdbc:postgresql://[DBSERVER]")
+            .option("dbtable", "[SCHEMA].[TABLENAME]")
+            .option("user", "[USERNAME]")
+            .option("password", "[PASSWORD]")
+            .save())
+
+
+    - To write data using the 'jdbc' method:
+
+        (jdbcDF2
+            .write
+            .jdbc("jdbc:postgresql:[DBSERVER]", "[SCHEMA].[TABLENAME]",
+                  properties={"user": "[USERNAME]", "password": "[PASSWORD]"}))
+
+
+
+- MySQL
+
+    - To connect to a MySQL database, build or download the JDBC jar and add it to your classpath.  To
+        start a Spark shell:
+
+        $ bin/pyspark --jars mysql-connector-java_8.0.16-bin.jar
+
+
+    - To read data from a MySQL database:
+
+        jdbcDF = (spark
+            .read
+            .format("jdbc")
+            .option("url", "jdbc:mysql://[DBSERVER]:3306/[DATABASE]")
+            .option("driver", "com.mysql.jdbc.Driver")
+            .option("dbtable", "[TABLENAME]")
+            .option("user", "[USERNAME]")
+            .option("password", "[PASSWORD]")
+            .load())
+
+
+    - To write data to a MySQL database:
+
+        (jdbcDF
+            .write
+            .format("jdbc")
+            .option("url", "jdbc:mysql://[DBSERVER]:3306/[DATABASE]")
+            .option("driver", "com.mysql.jdbc.Driver")
+            .option("dbtable", "[TABLENAME]")
+            .option("user", "[USERNAME]")
+            .option("password", "[PASSWORD]")
+            .save())
+
+
+
+- Other External Data Sources
+
+    - Azure Cosmos DB
+    - Ms SQL Server
+    - Apache Cassandra
+    - Snowflake
+    - MongoDB
+    - Many others...
