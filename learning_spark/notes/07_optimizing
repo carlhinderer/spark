@@ -1,0 +1,391 @@
+-----------------------------------------------------------------------------
+| CHAPTER 7 - OPTIMIZING AND TUNING SPARK APPLICATIONS                      |
+-----------------------------------------------------------------------------
+
+- Viewing and Setting Spark Configurations
+
+    - We can get and set Spark properties in it's config files, which are stored in the $SPARK_HOME 
+        directory.  Important files include:
+
+        conf/spark-defaults.conf.template
+        conf/log4j.properties.template
+        conf/spark-env.sh.template
+
+      Changing default values in the files and saving them without the '.template' suffix instructs Spark
+        to use the new files.
+
+
+    - Another way is to specify Spark configurations on the command line when you 'spark-submit' them
+        using the '--conf' flag.
+
+        $ spark-submit --conf spark.sql.shuffle.partitions=5 
+                       --conf "spark.executor.memory=2g" 
+                       --class main.scala.chapter7.SparkConfig_7_1 jars/mainscala-chapter7_2.12-1.0.jar
+
+
+    - We can specify configurations in the application code:
+
+        // In Scala
+
+        // Create a session
+        val spark = SparkSession.builder
+          .config("spark.sql.shuffle.partitions", 5)
+          .config("spark.executor.memory", "2g")
+          .master("local[*]")
+          .appName("SparkConfig")
+          .getOrCreate()
+
+        // Set config after session creation
+        spark.conf.set("spark.sql.shuffle.partitions", spark.sparkContext.defaultParallelism)
+
+
+    - Another way is through the programmatic interface via the Spark shell.
+
+        >>> spark.conf.get("spark.sql.shuffle.partitions")
+        >>> spark.conf.set("spark.sql.shuffle.partitions", 5)
+
+
+
+- Scaling Spark for Large Workloads
+
+    - Large Spark workloads are often batch jobs.  Those jobs may process tens of terabytes or more.  To
+        enable higher performance, we focus on configurations affecting 3 components:
+
+        1. The Spark driver
+        2. The Spark executor
+        3. The shuffle service running on the executor
+
+
+    - When you specify compute resources as command-line arguments to 'spark-submit', you statically cap
+        the limit.  If you instead use dynamic resource allocation, the driver can request more or fewer
+        resource as the workload demands.
+
+      To configure dynamic allocation:
+
+        spark.dynamicAllocation.enabled true                   # Default is false
+        spark.dynamicAllocation.minExecutors 2
+        spark.dynamicAllocation.schedulerBacklogTimeout 1m
+        spark.dynamicAllocation.maxExecutors 20
+        spark.dynamicAllocation.executorIdleTimeout 2min
+
+
+    - The amount of memory available to each executor is controlled by 'spark.executor.memory'.  This is
+        divided into 3 sections: execution memory (60%), storage memory (40%), and reserve memory (0%)
+        after setting aside 300 MB reserved to avoid OOM errors.
+
+      These are important configuration settings to tweak performance:
+
+        spark.driver.memory
+        spark.shuffle.file.buffer
+        spark.file.transferTo
+        spark.shuffle.unsafe.file.output.buffer
+        spark.io.compression.lz4.blockSize
+        spark.shuffle.service.index.cache.size
+        spark.shuffle.registration.timeout
+        spark.shuffle.registration.maxAttempts
+
+
+
+- Maximizing Spark parallelism
+
+    - To optimize Spark, we need to maximize parallelism, which means we need to look into how Spark reads
+        into memory from storage and what partitions mean to Spark.
+
+        
+    - In data management, a 'partition' is a way to arrange data into a subset of readable chunks in
+        contiguous data on disk.  This is what allows for massive parallelism of data processing.
+
+        
+    - To optimize for Spark processing, we should have at least as many partitions as executor cores.
+
+
+    - Spark's tasks process data as partitions read from disk into memory.  Data is laid out in chunks
+        or contiguous file blocks, depending on the store.  File blocks on data range from 64-128 MB.
+        For example, HDFS and S3 both use 128 MB.  A contiguous collection of these blocks constitues
+        a partition.
+
+
+    - The size of a partition is set with 'spark.sql.files.maxPartitionBytes', 128 MB by default.
+
+
+    - Partitions are also created when you use certain methods of the DF API.  For example, while
+        creating a large DF or reading a large file from disk, you can explicitly instruct Spark to
+        create a certain number of partitions:
+
+        // In Scala
+        val ds = spark.read.textFile("../README.md").repartition(16)
+
+        val numDF = spark.range(1000L * 1000 * 1000).repartition(16)
+
+
+    - 'Shuffle partitions' are created during the shuffle phase.  By default, 'spark.sql.shuffle.partitions'
+        is set to 200.  These are created by operations like 'groupBy()' or 'join()', aka wide
+        transformations.  During these operations, the shuffle will spill results to local disks at the
+        location specified in 'spark.local.directory'.
+
+
+
+- DataFrame.cache()
+
+    - The 'cache()' method will store as many of the partitions read in memory across Spark executors as
+        memory allows.
+
+
+    - A DF may be fractionally cached (ie 4 of 8 partitions), but a partition cannot be fractionally 
+        cached.  However, if not all of your partitions are cached, when you want to access the partitions
+        again, they will have to be recomputed.
+
+        // In Scala
+        val df = spark.range(1 * 10000000).toDF("id").withColumn("square", $"id" * $"id")
+        df.cache()   // Cache the data
+
+        // Materialize the cache
+        df.count()   
+        // Took 5.11 s
+
+        // Now, get it from the cache
+        df.count()
+        // Took 0.44 s
+
+
+    - Note that when you use 'cache()' or 'persist()', the DF is not fully cached until you invoke an
+        action to start the lazy evaluation.
+
+
+
+- DataFrame.persist()
+
+    - The 'persist(StorageLevel.LEVEL' is more nuanced, providing control over how data is cached.
+
+
+    - The possible storage levels are:
+
+        MEMORY_ONLY
+        MEMORY_ONLY_SER      # Stored as compact byte array, has to be deserialized to be used
+
+        MEMORY_AND_DISK      # Dump to disk if not enough memory
+        DISK_ONLY            # Serialized using either Java or Kryo serialization
+
+        OFF_HEAP             # Used for storage and query execution
+
+        MEMORY_AND_DISK_SER  # Like MEMORY_AND_DISK, but compact byte array is used
+
+
+    - For an example:
+
+        // In Scala
+        import org.apache.spark.storage.StorageLevel
+
+        // Create a DataFrame with 10M records
+        val df = spark.range(1 * 10000000).toDF("id").withColumn("square", $"id" * $"id")
+
+        // Serialize the data and cache it on disk
+        df.persist(StorageLevel.DISK_ONLY)
+
+        // Materialize the cache
+        df.count()
+        // Command Took 2.08 s
+
+        // Now get it from the cache
+        df.count()
+        // Took 0.38 s
+
+
+    - To unpersist your data:
+
+        df.unpersist()
+
+
+    - In addition to DFs, you can also cache tables or views:
+
+        // In Scala
+        df.createOrReplaceTempView("dfTable")
+        spark.sql("CACHE TABLE dfTable")
+        spark.sql("SELECT count(*) FROM dfTable").show()
+
+
+
+- When to Cache and Persist
+
+    - Common use cases for caching are scenarios where you will want to access a large data set repeatedly
+        for queries or transformations.  Examples include:
+
+        - DFs used during iterative machine learning training
+        - DFs accessed commonly for doing frequent ETL transformations or building data pipelines
+
+
+    - Don't try to cache DFs that are too big to fit in memory.
+
+
+    - Don't cache a DF unless it requires frequent use.
+
+
+
+- Spark Join Strategies
+
+    - Join operations are common in big data analytics in which 2 DFs are merged over a common matching
+        key.  All types of joins trigger a large amount of data movement across executors.
+
+
+    - At the heart of these transformations is how Spark computes what data to produce, what keys and 
+        associated data to write to the disk, and how to transfer those keys and data to nodes as part of 
+        operations like groupBy(), join(), agg(), sortBy(), and reduceByKey(). This movement is commonly 
+        referred to as the 'shuffle'.
+
+
+    - Spark has 5 distinct join strategies by which it moves data across executors:
+
+        - Broadcast Hash Join (BHJ)
+        - Shuffle Hash Join (SHJ)
+        - Shuffle Sort Merge Join (SMJ)
+        - Broadcast Nested Loop Join (BNLJ)
+        - Shuffle-and-Replicated Nested Loop Join (aka a Cartesian Product Join)
+
+
+    - BHJ and SMJ are the two most common.
+
+
+
+- Broadcast Hash Join
+
+    - This join is used when a small data set (fitting in the driver's memory) is joined to a large data
+        set over certain conditions or columns.  The smaller data set is broadcasted by the driver to all
+        Spark executors, and joined to the larger data set on each executor.
+
+
+    - By default, Spark will use a broadcast join if the smaller data set is less than 10 MB.  This
+        config is set in 'spark.sql.autoBroadcastJoinThreshold'.  If you are confident you have enough
+        memory in your executors, this could be as high as 100 MB.
+
+
+    - The BHJ is the simplest and fastest join, since it doesn't involve any shuffle.
+
+
+    - We can also force a broadcast join, which we'll do here to illustrate the concept.
+
+        // In Scala, join list of Soccer players to teams
+        import org.apache.spark.sql.functions.broadcast
+        val joinedDF = playersDF.join(broadcast(clubsDF), "key1 === key2")
+
+        // See the physical plan that was performed
+        joinedDF.explain(mode)
+
+
+    - Use a BHJ when:
+
+        - Each key within the smaller and larger data sets is hashed to the same partition in Spark
+
+        - When one data set is much smaller than the other
+
+        - When you only want to perform an equijoin
+
+        - When you're not worried about excessive network bandwidth usage
+
+
+
+- Shuffle Sort Merge Join
+
+    - The sort-merge algorithm is an efficient way to merge two large data sets over a common key that is
+        sortable, unique, and can be stored in the same partition.
+
+
+    - From Spark's perspective, this means that all rows within each data set with the same key are hashed
+        on the same partition by the same executor.
+
+
+    - This join scheme has 2 phases:
+
+        1. Sort = Sort each data set by it's desired join key
+
+        2. Merge = Iterate over each key in the row from each data set and merge the rows if the keys match
+
+
+    - Use the SMJ when:
+
+        - Each key within two large data sets can be sorted and hashed to the same partition by Spark
+
+        - When you want to perform only equijoins to combine 2 data sets based on matching sorted keys
+
+        - When you want to prevent Exchange and Sort operations to save large shuffles across the network
+
+
+
+- Optimizing the Shuffle Sort Merge Join
+
+    - We can eliminate the Exchange step if we create partitioned buckets for common sorted keys or columns
+        on which we want to perform frequent equijoins.  We can create an explicit number of buckets to
+        store specific sorted columns (one key per bucket).
+
+
+    - Here, we sort and bucket by the 'user_id' and 'uid' columns on which we join, and we save the 
+        buckets as Spark managed tables in Parquet format.
+
+        // In Scala
+        import org.apache.spark.sql.functions._
+        import org.apache.spark.sql.SaveMode
+
+        // Save as managed tables by bucketing them in Parquet format
+        usersDF.orderBy(asc("uid"))
+               .write.format("parquet")
+               .bucketBy(8, "uid")
+               .mode(SaveMode.OverWrite)
+               .saveAsTable("UsersTbl")
+
+        ordersDF.orderBy(asc("users_id"))
+                .write.format("parquet")
+                .bucketBy(8, "users_id")
+                .mode(SaveMode.OverWrite)
+                .saveAsTable("OrdersTbl")
+
+        // Cache the tables
+        spark.sql("CACHE TABLE UsersTbl")
+        spark.sql("CACHE TABLE OrdersTbl")
+
+        // Read them back in
+        val usersBucketDF = spark.table("UsersTbl")
+        val ordersBucketDF = spark.table("OrdersTbl")
+
+        // Do the join and show the results
+        val joinUsersOrdersBucketDF = ordersBucketDF
+            .join(usersBucketDF, $"users_id" === $"uid")
+
+        joinUsersOrdersBucketDF.show(false)
+
+
+
+- Inspecting the Spark UI
+
+    - The Spark UI has 6 tabs, each providing opportunities for exploration.
+
+
+    - Jobs and Stages
+
+        - Spark breaks an application down into jobs, stages, and tasks.  These tabs allow you to drill
+            down into them at a granular level.
+
+        - They also show Completion Status and metrics related to I/O, memory consumption, duration of
+            execution, etc.
+
+
+    - Executors
+
+        - The Executors tab shows information about the executors created for the application.  You can
+            drill down into the details of resource usage.
+
+
+    - Storage
+
+        - The Storage tab shows information about any tables or DFs cached by the application as a result
+            of 'cache()' or 'persist()' calls.
+
+
+    - SQL
+
+        - The SQL tab shows the queries that have been made by an application.  Each shows the duration,
+            execution plan, etc.
+
+
+    - Environment
+
+        - The Environment tab shows details about the envioronment your application is running in for
+            troubleshooting purposes.
