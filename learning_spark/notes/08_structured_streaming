@@ -1,0 +1,245 @@
+-----------------------------------------------------------------------------
+| CHAPTER 8 - STRUCTURED STREAMING                                          |
+-----------------------------------------------------------------------------
+
+- Spark Stream Processing
+
+    - 'Stream processing' is defined as the continuous processing of endless streams of data.  
+        Traditionally, distributed stream processing has been implemented with a 'record-at-a-time' 
+        processing model.
+
+
+
+- Micro-Batch Stream Processing
+
+    - This traditional approach was challenged by Spark when it introduced Spark Streaming.  It introduced
+        the idea of 'micro-batch stream processing', where the streaming computation is modeled as a
+        continuous series of small, map/reduce style batch processing jobs on small chunks of stream data.
+
+
+    - For example, Spark may divide the data from the input stream into 1-second micro batches.  Each batch
+        is processed by the Spark cluster that generates the output in micro batches.
+
+
+    - This approach has 2 advantages:
+
+        1. We can quickly and efficiently recover from failures and straggler executors by rescheduling
+            one or more copies of the task for other executors.
+
+        2. The deterministic nature ensures the out output data is idempotent.
+
+
+    - This approach comes at a latency cost.  Spark cannot provide millisecond-level latencies.  Latency
+        is usually a few seconds.  This tends to be fine for the vast majority of streaming use cases.
+
+
+    - The early DStreams API, built on RDDs, proved that the same processing model used for batch could
+        also be used for streaming.
+
+
+
+- Lessons Learned from Spark Streaming (DStreams)
+
+    - The DStreams API had a few things that needed to be improved:
+
+        - Developers had to write separate code for batch and streaming jobs.
+
+        - There was a lack of separation between the logical and physical plans.
+
+        - There was a lack of support for event-time windows.
+
+
+    - The Philosophy of Structured Streaming
+
+        - Single, unified model for batch and streaming APIs
+
+        - Broader definition of stream processing 
+
+
+
+- The Programming Model of Structured Streaming
+
+    - Structured streaming treats a stream as an unbounded, continuously appended table.  Every new record
+        is like a new row being appended to the unbounded input table.
+
+
+    - The output produced until time T will be equivalent to having all of the input until T in a static,
+        bounded table, and running a batch job on the table.
+
+
+    - The developer then defines the query on this conceptual table as if it were a static table to 
+        compute the result table that will be written to an output sink.  Structured Streaming will
+        automatically convert this batch-like query to a streaming execution plan, a process known as
+        'incrementalization'.
+
+
+    - Finally, develoeprs specify triggering policies to control when to update the results.  Every time a
+        trigger fires, Structured Streaming checks for new data and incrementally updates the result.
+
+
+    - The last part of the model is the output mode.  Each time the result table is updated, the developer
+        will want to write the updates to an external system, like a filesystem (ie HDFS or S3) or a
+        database (ie MySQL or Cassandra).
+
+      For this purpose, SS provides 3 output modes:
+
+        1. Append Mode = Only the new rows appended to the result table since the last trigger will be
+                           written to external storage.  This is applicable only in queries where existing
+                           rows cannot change (ie a map on an input stream).
+
+        2. Update Mode = Only the rows that were updated in the result table since the last trigger will be
+                           changed in external storage.  This works for output sinks that can be updated
+                           in place, like MySQL.
+
+        3. Complete Mode = The entire updated result table will be written to external storage.
+
+
+
+- The Fundamentals of a Structured Streaming Query
+
+    - There are 5 steps to defining a structured streaming query:
+
+        1. Define input sources
+        2. Transform data
+        3. Define output sink and output mode
+        4. Specify processing details
+        5. Start the query
+
+
+
+- Step 1 - Define input sources
+
+    - The first set is to define a DF from a streaming source.  In this case, we'll use 'spark.readStream'
+        instead of 'spark.read'.
+
+
+    - Here, we create a DF from a text data stream to be received over a socket connection.
+
+        lines = (spark
+            .readStream.format("socket")
+            .option("host", "localhost")
+            .option("port", 9999)
+            .load())
+
+
+    - Note that this does not immediately start reading streaming data until the streaming query is
+        explicitly started.
+
+
+    - Besides sockets, Spark natively supports reading data streams from Kafka and all the file formats
+        DataFrameReader supports.
+
+
+
+- Step 2 - Transform Data
+
+    - Now we can apply DF operations, such as splitting the lines into individual words and counting them:
+
+        from pyspark.sql.functions import *
+
+        words = lines.select(split(col("value"), "\\s").alias("word"))
+        counts = words.groupBy("word").count()
+
+
+    - 'counts' is a streaming DataFrame (a DF on unbounded, streaming data) that represents the running
+        word counts that will be computed once the streaming query is started.
+
+
+    - 'Stateless transformations' do not require any information from the previous row (ie select(),
+        'filter()', 'map()').  Stateless operations can be applied to both batch and streaming DFs.
+
+
+    - 'Stateful transformations' require combining data across multiple rows (ie count()).  Many of these
+        operations are supported in streaming, but a few are not.
+
+
+
+- Step 3 - Define output sink and output mode
+
+    - After transforming the data, we can output data with 'DataFrame.writeStream'.  Here, we'll write
+        the final counts to the console:
+
+        writer = counts.writeStream.format("console").outputMode("complete")
+
+
+    - Since our count query is updating previously generated counts, it does not support 'Append Mode'.
+
+
+    - In 'Complete Mode', all the rows of the result table will be output at every trigger.  This is
+        supported by queries where the result table can be retained in memory.
+
+
+    - In 'Update Mode', only the rows updated since the last trigger will be output.  This mode is
+        supported by most queries.
+
+
+    - Besides writing to the console, SS natively supports streaming writes to files and Kafka.
+
+
+
+- Step 4 - Specify Processing Details
+
+    - The final step before starting the query is to specify details of how to process the data.
+
+        checkpointDir = "..."
+
+        writer2 = (writer
+            .trigger(processingTime="1 second")
+            .option("checkpointLocation", checkpointDir))
+
+
+    - There are 4 trigger options:
+
+        Default                # Next batch is triggered as soon as previous batch has completed
+        ProcessingTime         # Specify a fixed interval
+        Once                   # Executes once and then stops
+        Continuous             # Experimental in 3.0, lowest latency possible
+
+
+    - The 'checkpointLocation' is a directory in any HDFS-compatible filesystem where a streaming query
+        saves it's progress information.  Upon failure, this is used to restart the failed query exactly
+        where it left off.  Setting this option is necessary for recovery and exactly-once guarantees.
+
+
+
+- Step 5 - Start the Query
+
+    - Finally, we can start the query:
+
+        streamingQuery = writer2.start()
+
+
+    - Note that 'start()' is a nonblocking method, so it will return as soon as the query is started in
+        the background.  If you want the main thread to block until the streaming query is terminated,
+        you can use 'streamingQuery.awaitTermination()'.
+
+
+
+- Putting It All Together
+
+    - Here is the complete code for reading streams of text data over a socket, counting the words, and
+        printing the counts to the console:
+
+        from pyspark.sql.functions import *
+
+        spark = SparkSession...
+
+        lines = (spark
+            .readStream.format("socket")
+            .option("host", "localhost")
+            .option("port", 9999)
+            .load())
+
+        words = lines.select(split(col("value"), "\\s").alias("word"))
+        counts = words.groupBy("word").count()
+        checkpointDir = "..."
+
+        streamingQuery = (counts
+            .writeStream
+            .format("console")
+            .outputMode("complete")
+            .trigger(processingTime="1 second")
+            .option("checkpointLocation", checkpointDir)
+            .start())
+
+        streamingQuery.awaitTermination()
